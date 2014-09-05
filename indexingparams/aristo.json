@@ -1,0 +1,53 @@
+{
+  "corpus" : true,
+  "corpusParameters" :   {
+    "blockSize" : 512,
+    "filename" : "/home/dietz/biocreative/code/index/biothe",
+    "mergerClass" : "org.lemurproject.galago.core.index.merge.CorpusMerger",
+    "readerClass" : "org.lemurproject.galago.core.index.corpus.CorpusReader",
+    "tokenizer" :     {
+      "fields" : [ "name" , "desc", "go"],
+      "formats" :       {
+
+      }
+    },
+    "writerClass" : "org.lemurproject.galago.core.index.corpus.CorpusFolderWriter"
+  },
+  "q-distrib" : 50,
+  "fieldIndex" : true,
+  "fieldIndexParameters" :   {
+    "nonStemmedPostings" : true,
+    "stemmedPostings" : false,
+    "stemmer" : [ "krovetz"]
+  },
+  "galagoJobDir" : "/home/dietz/biocreative/code/index/tmp",
+  "indexPath" : "/home/dietz/biocreative/code/index/biothe",
+  "inputPath": ["./data/biothesaurus/iproclass.xml.gz"],
+
+  "mode" : "local",
+  "metadata" : true,
+  "nonStemmedPostings" : true,
+  "parser" :   {
+    "filetype": "foo",
+    "externalParsers" : [       {
+      "class" : "edu.umass.ciir.biocreative.parse.BioThesaurusGalagoParser",
+      "filetype" : "foo",
+    }]
+  },
+
+  "port" : 60257,
+  "server" : false,
+  "skipDistance" : 500,
+  "skipping" : true,
+  "stemmedPostings" : true,
+  "stemmer" : [ "krovetz"],
+  "stemmerClass" :   {
+    "krovetz" : "org.lemurproject.galago.core.parse.stem.KrovetzStemmer"
+  },
+  "tokenizer" :   {
+    "fields" : [ "name" , "desc", "go"],
+    "formats" :     {
+
+    }
+  }
+}
