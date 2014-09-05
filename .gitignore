@@ -1,0 +1,12 @@
+*~
+*.iml
+*.prj
+.hg
+target/
+*.tmp
+tmp/
+.idea/
+*.class
+*.tmp
+*.imp
+*.prj
