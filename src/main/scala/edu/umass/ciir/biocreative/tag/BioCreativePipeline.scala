@@ -64,7 +64,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         counting.add("allGo")
 
         println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", ")+" \n " +
-          "goldMatches Gene: "+goldGene.map(x => if(foundGene.get.mention == x) { "##"+x+"##"} else x).mkString(", ")+ " " +
+          "goldMatches Gene: "+goldGene.map(x => if(foundGene.isDefined && foundGene.get.mention == x) { "##"+x+"##"} else x).mkString(", ")+ " " +
           "Go:"+goldGo.mkString(","))
       }
 
