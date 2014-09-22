@@ -1,19 +1,12 @@
 package edu.umass.ciir.biocreative.parse
 
-import java.io.{StringReader, BufferedInputStream, BufferedReader, FileInputStream}
-import java.nio.CharBuffer
+import java.io.{BufferedInputStream, FileInputStream}
 import java.util.zip.GZIPInputStream
-
-import com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl
-import org.htmlcleaner.PrettyXmlSerializer
-import org.xml.sax.InputSource
-
-import scala.util.parsing.input.StreamReader
 
 //import javax.xml.stream.XMLEventReader
 
-import scala.xml.{Node, InputSource, XML}
-import scala.xml.pull.{XMLEvent, EvElemEnd, EvElemStart, XMLEventReader}
+import scala.xml.pull.XMLEvent
+import scala.xml.{Node, XML}
 /**
  * User: dietz
  * Date: 9/4/14

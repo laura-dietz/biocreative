@@ -23,6 +23,8 @@ public class BioThesaurusGalagoParser extends DocumentStreamParser {
     private final BioThesaususParser bioThesaususParser;
     private final BioCreativeParsing parsingTools = new BioCreativeParsing();
 
+    private int count = 10000;
+
     public BioThesaurusGalagoParser(DocumentSplit split, Parameters p) throws IOException {
         super(split, p);
         stream = getBufferedInputStream(split);
@@ -32,6 +34,7 @@ public class BioThesaurusGalagoParser extends DocumentStreamParser {
     }
     @Override
     public Document nextDocument() throws IOException {
+        if( count <= 0) return null;
         if(bioThesaususIterator.hasNext()){
             Node entry = bioThesaususIterator.next();
             GalagoBioDocument bioDocument = bioThesaususParser.convert(entry);
@@ -43,6 +46,7 @@ public class BioThesaurusGalagoParser extends DocumentStreamParser {
             Document doc = new Document(identifier, text);
             doc.metadata = meta;
 
+            count -= 1;
             return doc;
         } else {
             return null;

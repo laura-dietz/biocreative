@@ -1,9 +1,9 @@
 {
-  "corpus_" : "/home/dietz/biocreative/code/index/biothe/corpus",
+  "corpus_" : "/home/dietz/biocreative/code/index/biothe-p/corpus",
   "corpus" : true,
   "corpusParameters" :   {
     "blockSize" : 512,
-    "filename" : "/home/dietz/biocreative/code/index/biothe/corpus",
+    "filename" : "/home/dietz/biocreative/code/index/biothe-p/corpus",
     "mergerClass" : "org.lemurproject.galago.core.index.merge.CorpusMerger",
     "readerClass" : "org.lemurproject.galago.core.index.corpus.CorpusReader",
     "tokenizer" :     {
@@ -19,11 +19,10 @@
   "fieldIndexParameters" :   {
     "nonStemmedPostings" : true,
     "stemmedPostings" : false,
-    "stemmer" : [ "krovetz"]
   },
   "galagoJobDir" : "/home/dietz/biocreative/code/index/tmp",
-  "indexPath" : "/home/dietz/biocreative/code/index/biothe",
-  "index" : "/home/dietz/biocreative/code/index/biothe",
+  "indexPath" : "/home/dietz/biocreative/code/index/biothe-p",
+  "index" : "/home/dietz/biocreative/code/index/biothe-p",
   "inputPath": ["./data/biothesaurus/iproclass.xml.gz"],
 
   "mode" : "local",
@@ -42,14 +41,14 @@
   "skipDistance" : 500,
   "skipping" : true,
   "stemmedPostings" : true,
-  "stemmer" : [ "krovetz"],
-  "stemmerClass" :   {
-    "krovetz" : "org.lemurproject.galago.core.parse.stem.KrovetzStemmer"
-  },
+  "stemmer" : [ ],
   "tokenizer" :   {
     "fields" : [ "name" , "desc", "go", "ids", "function", "species","entitytype"],
     "formats" :     {
 
-    }
+    },
+    "tokenizerClass" : "edu.umass.ciir.proteintokenizer.ProteinTokenizer"
+  },
+  "tokenizerClass" : "edu.umass.ciir.proteintokenizer.ProteinTokenizer"
   }
 }
