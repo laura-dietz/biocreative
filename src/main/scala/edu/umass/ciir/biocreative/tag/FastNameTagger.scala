@@ -12,7 +12,7 @@ case class Match(lower: Int, upper: Int, mention: String)
  * Time: 4:06 PM
  */
 class FastNameTagger(val dictionaryFile:File) {
-  val pb: ProcessBuilder = new ProcessBuilder("./name-tagger", dictionaryFile.getAbsolutePath)
+  val pb: ProcessBuilder = new ProcessBuilder("./name-tagger", "-w", dictionaryFile.getAbsolutePath)
   pb.redirectInput(Redirect.PIPE)
   pb.redirectOutput(Redirect.PIPE)
   val proc = pb.start()
