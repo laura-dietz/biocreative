@@ -15,20 +15,8 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
   val counting = new CountingTable[String]()
 
-  def processSingleDocument(file: File) = {
-//    def create = XMLInputFactory.newInstance()
-//      create.setProperty(XMLInputFactory.SUPPORT_DTD, java.lang.Boolean.FALSE)
-//
-//    val evReader = create.createXMLEventReader(new FileInputStream(new java.io.File(file.toAbsolute.path)))
-//    evReader.
-
-//    val factory = SAXParserFactory.newInstance()
-//    factory.setValidating(false)
-//    val parser = factory.newSAXParser()
-//    val isValidating = parser.isValidating()
-//    val xmlLoader = XML.withSAXParser(parser)
+  def processSingleDocumentTrain(file: File) = {
     val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
-//    val root = XML.loadXML(new InputSource(new FileReader(file.toAbsolute.path)), parser)
 
     val documentId  = ((root \\ "document").head \ "id").text
 
@@ -39,12 +27,15 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
     for(passage <- root \\ "passage"){
       val offset = (passage \ "offset").text.toInt
-      val text = (passage \ "text").text
-      val matches = tagger.tag(text)
 
-      if(doTrain){
-        val goldGene = (for(infon <- (passage \\ "infon"); if (infon\"@key").text == "gene") yield infon.text).toSet
-        val goldGo = (for(infon <- (passage \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text).toSet
+      // only for training: nested annotation element
+      for(annotation <- passage){
+
+        val text = (annotation \ "text").text
+        val matches = tagger.tag(text)
+
+        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield infon.text).toSet
+        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text).toSet
 
         val foundGene = matches.find(m => goldGene.contains(m.mention)).isDefined
         val foundGo = matches.find(m => goldGo.contains(m.mention)).isDefined
@@ -52,9 +43,10 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         if(foundGo) counting.add("foundGo")
         counting.add("allGene")
         counting.add("allGo")
+
+        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", "))
       }
 
-      println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", "))
     }
 
     val geneRecall = 1.0 * counting.getOrElse("foundGene", 0) / counting.getOrElse("allGene", 0)
@@ -62,9 +54,33 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
     println(s" geneRecall=$geneRecall\tgoRecall=$goRecall")
   }
 
+  def processSingleDocumentTest(file: File) = {
+    val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
+
+    val documentId  = ((root \\ "document").head \ "id").text
+
+    println("=========================================")
+    println("====== "+documentId+ " ===================")
+
+
+
+    for(passage <- root \\ "passage"){
+      val offset = (passage \ "offset").text.toInt
+
+      val text = (passage \ "text").text
+      val matches = tagger.tag(text)
+        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", "))
+    }
+
+  }
+
   def processAllDocuments(dir: Directory): Unit = {
      for(file <- dir.list; if file.isFile && file.hasExtension("xml")) {
-       processSingleDocument(file.toFile)
+       if (doTrain) {
+         processSingleDocumentTrain(file.toFile)
+       } else {
+         processSingleDocumentTest(file.toFile)
+       }
      }
   }
 
