@@ -115,7 +115,7 @@ object BioCreativePipeline {
 
 
 
-    val tagger = new FastNameTagger(new java.io.File(dictionaryFile))
+    val tagger = new FastNameTagger(new java.io.File(dictionaryFile), wholeWordMatch = true, caseInsensitiveMatch = true)
     val pipe = new BioCreativePipeline(tagger, doTrain)
     pipe.processAllDocuments(Directory(articlesDir))
   }

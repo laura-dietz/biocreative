@@ -5,6 +5,7 @@ import java.lang.ProcessBuilder.Redirect
 
 import edu.umass.ciir.biocreative.tag.MatchType.MatchType
 
+import scala.collection.mutable.ListBuffer
 
 object MatchType extends Enumeration {
   type MatchType = Value
@@ -12,13 +13,19 @@ object MatchType extends Enumeration {
 }
 case class Match(lower: Int, upper: Int, mention: String, matchType:MatchType)
 
+import scala.collection.JavaConversions._
+
 /**
  * User: dietz
  * Date: 9/21/14
  * Time: 4:06 PM
  */
-class FastNameTagger(val dictionaryFile:File) {
-  val pb: ProcessBuilder = new ProcessBuilder("./name-tagger", "-w", dictionaryFile.getAbsolutePath)
+class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsensitiveMatch:Boolean) {
+  val flags = new ListBuffer[String]()
+  if(wholeWordMatch) flags += "-w"
+  if(caseInsensitiveMatch) flags += "-i"
+  private val command = List("./name-tagger") ++ flags ++ List(dictionaryFile.getAbsolutePath)
+  val pb: ProcessBuilder = new ProcessBuilder(command)
   pb.redirectInput(Redirect.PIPE)
   pb.redirectOutput(Redirect.PIPE)
   val proc = pb.start()
@@ -51,7 +58,7 @@ class FastNameTagger(val dictionaryFile:File) {
 
 object FastNameTagger {
   def main(args:Array[String]): Unit = {
-    val tagger = new FastNameTagger(new File("./data/names.txt"))
+    val tagger = new FastNameTagger(new File("./data/names.txt"), wholeWordMatch = true, caseInsensitiveMatch = false)
 
     tagger.tag("Laura Dietz lives in Massachusetts.")
     tagger.tag("In Amherst is the University of Massachusetts located. Where are you located?")
