@@ -15,6 +15,9 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
   val counting = new CountingTable[String]()
 
+  def cleanGoldGene(geneAnnotation: String) = geneAnnotation.substring(0, geneAnnotation.indexOf('(')).trim
+  def cleanGoldGo(goAnnotation: String) = goAnnotation.substring(0, goAnnotation.indexOf('|')).trim
+
   def processSingleDocumentTrain(file: File) = {
     val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
 
@@ -34,8 +37,8 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         val text = (annotation \ "text").text
         val matches = tagger.tag(text)
 
-        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield infon.text.toLowerCase).toSet
-        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text.toLowerCase).toSet
+        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield cleanGoldGene(infon.text).toLowerCase).toSet
+        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGo(infon.text).toLowerCase).toSet
 
         val foundGene = matches.find(m => goldGene.contains(m.mention.toLowerCase)).isDefined
         val foundGo = matches.find(m => goldGo.contains(m.mention.toLowerCase)).isDefined
