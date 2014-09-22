@@ -40,14 +40,16 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield cleanGoldGene(infon.text).toLowerCase).toSet
         val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGo(infon.text).toLowerCase).toSet
 
-        val foundGene = matches.find(m => goldGene.contains(m.mention.toLowerCase)).isDefined
-        val foundGo = matches.find(m => goldGo.contains(m.mention.toLowerCase)).isDefined
-        if(foundGene) counting.add("foundGene")
-        if(foundGo) counting.add("foundGo")
+        val foundGene = matches.find(m => goldGene.contains(m.mention.toLowerCase))
+        val foundGo = matches.find(m => goldGo.contains(m.mention.toLowerCase))
+        if(foundGene.isDefined) counting.add("foundGene")
+        if(foundGo.isDefined) counting.add("foundGo")
         counting.add("allGene")
         counting.add("allGo")
 
-        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", ")+" \n goldMatches Gene: "+goldGene.mkString(", ")+ " Go:"+goldGo.mkString(","))
+        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", ")+" \n " +
+          "goldMatches Gene: "+goldGene.map(x => if(foundGene.get.mention == x) { "##"+x+"##"} else x).mkString(", ")+ " " +
+          "Go:"+goldGo.mkString(","))
       }
 
     }
