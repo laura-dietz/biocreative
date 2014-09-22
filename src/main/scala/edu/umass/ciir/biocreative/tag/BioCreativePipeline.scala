@@ -15,8 +15,24 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
   val counting = new CountingTable[String]()
 
-  def cleanGoldGene(geneAnnotation: String) = geneAnnotation.substring(0, geneAnnotation.indexOf('(')).trim
-  def cleanGoldGo(goAnnotation: String) = goAnnotation.substring(0, goAnnotation.indexOf('|')).trim
+  def cleanGoldGene(geneAnnotation: String) = {
+    val offset = geneAnnotation.indexOf('(')
+    if(offset >=0)
+      geneAnnotation.substring(0, offset).trim
+    else {
+      System.err.println("Tried to clean gene annotation, but count not find delimiter \'(\'. "+geneAnnotation)
+      geneAnnotation
+    }
+  }
+  def cleanGoldGo(goAnnotation: String) = {
+    val offset = goAnnotation.indexOf('|')
+    if(offset>=0)
+      goAnnotation.substring(0, offset).trim
+    else {
+      System.err.println("Tried to clean go annotation, but could not find delimiter \'|\'. "+goAnnotation)
+      goAnnotation
+    }
+   }
 
   def processSingleDocumentTrain(file: File) = {
     val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
