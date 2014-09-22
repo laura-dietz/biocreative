@@ -1,6 +1,6 @@
 package edu.umass.ciir.biocreative.tag
 
-import edu.umass.ciir.strepsi.MainTools
+import edu.umass.ciir.strepsi.{CountingTable, MainTools}
 
 import scala.reflect.io.{Directory, File}
 import scala.xml.XML
@@ -10,8 +10,10 @@ import scala.xml.XML
  * Date: 9/22/14
  * Time: 9:52 AM
  */
-class BioCreativePipeline(tagger:FastNameTagger) {
+class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
   System.setProperty("file.encoding","UTF-8")
+
+  val counting = new CountingTable[String]()
 
   def processSingleDocument(file: File) = {
 //    def create = XMLInputFactory.newInstance()
@@ -33,13 +35,31 @@ class BioCreativePipeline(tagger:FastNameTagger) {
     println("=========================================")
     println("====== "+documentId+ " ===================")
 
+
+
     for(passage <- root \\ "passage"){
       val offset = (passage \ "offset").text.toInt
       val text = (passage \ "text").text
       val matches = tagger.tag(text)
 
+      if(doTrain){
+        val goldGene = (for(infon <- (passage \\ "infon"); if (infon\"@key").text == "gene") yield infon.text).toSet
+        val goldGo = (for(infon <- (passage \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text).toSet
+
+        val foundGene = matches.find(m => goldGene.contains(m.mention)).isDefined
+        val foundGo = matches.find(m => goldGo.contains(m.mention)).isDefined
+        if(foundGene) counting.add("foundGene")
+        if(foundGo) counting.add("foundGo")
+        counting.add("allGene")
+        counting.add("allGo")
+      }
+
       println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", "))
     }
+
+    val geneRecall = 1.0 * counting.getOrElse("foundGene", 0) / counting.getOrElse("allGene", 0)
+    val goRecall = 1.0 * counting.getOrElse("foundGo", 0) / counting.getOrElse("allGo", 0)
+    println(s" geneRecall=$geneRecall\tgoRecall=$goRecall")
   }
 
   def processAllDocuments(dir: Directory): Unit = {
@@ -54,10 +74,12 @@ object BioCreativePipeline {
   def main(args:Array[String]): Unit = {
     val dictionaryFile = MainTools.strsPlainFromArgs(args, "--dictionary=").headOption.getOrElse(throw new IllegalArgumentException("required flag --dictionary={dictionaryfile}"))
     val articlesDir = MainTools.strsPlainFromArgs(args, "--articles=").headOption.getOrElse(throw new IllegalArgumentException("required flag --articles={dir}"))
+    val doTrain = MainTools.strsPlainFromArgs(args, "--train").nonEmpty
+
 
 
     val tagger = new FastNameTagger(new java.io.File(dictionaryFile))
-    val pipe = new BioCreativePipeline(tagger)
+    val pipe = new BioCreativePipeline(tagger, doTrain)
     pipe.processAllDocuments(Directory(articlesDir))
   }
 }
