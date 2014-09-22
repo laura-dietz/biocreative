@@ -11,7 +11,7 @@ case class Match(lower: Int, upper: Int, mention: String)
  * Date: 9/21/14
  * Time: 4:06 PM
  */
-class BioCreativeRustTagging(val dictionaryFile:File) {
+class FastNameTagger(val dictionaryFile:File) {
   val pb: ProcessBuilder = new ProcessBuilder("./name-tagger", dictionaryFile.getAbsolutePath)
   pb.redirectInput(Redirect.PIPE)
   pb.redirectOutput(Redirect.PIPE)
@@ -43,9 +43,9 @@ class BioCreativeRustTagging(val dictionaryFile:File) {
   }
 }
 
-object BioCreativeRustTagging {
+object FastNameTagger {
   def main(args:Array[String]): Unit = {
-    val tagger = new BioCreativeRustTagging(new File("./data/names.txt"))
+    val tagger = new FastNameTagger(new File("./data/names.txt"))
 
     tagger.tag("Laura Dietz lives in Massachusetts.")
     tagger.tag("In Amherst is the University of Massachusetts located. Where are you located?")
