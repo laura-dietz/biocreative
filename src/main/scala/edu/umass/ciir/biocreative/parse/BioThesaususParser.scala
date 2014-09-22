@@ -1,6 +1,6 @@
 package edu.umass.ciir.biocreative.parse
 
-import java.io.{BufferedInputStream, FileInputStream}
+import java.io.{InputStream, BufferedInputStream, FileInputStream}
 import java.util.zip.GZIPInputStream
 
 //import javax.xml.stream.XMLEventReader
@@ -12,7 +12,7 @@ import scala.xml.{Node, XML}
  * Date: 9/4/14
  * Time: 4:35 PM
  */
-class BioThesaususParser(stream:BufferedInputStream) extends BioParser[Node] {
+class BioThesaususParser(stream:InputStream) extends BioParser[Node] {
   type XmlEventBlock = Seq[XMLEvent]
 
   val xmlSegmentIter = new XmlSegmentIterator(stream)
@@ -39,7 +39,7 @@ class BioThesaususParser(stream:BufferedInputStream) extends BioParser[Node] {
     def extent(fields:Seq[String]):String = {
       val elems =
         for(names <- fields.flatMap(elem \\ _ )) yield {
-          names.text // get the whole thing with tags
+          "<"+names.label+">"+names.text+"</"+names.label+">" // get the whole thing with tags
         }
       elems.mkString(" ")
     }
@@ -55,8 +55,8 @@ class BioThesaususParser(stream:BufferedInputStream) extends BioParser[Node] {
         }).toMap
     }
 
-    val nameExtents = extent(Seq("Protein_Name", "Gene_Name"))
-    val idExtents = extent(Seq("UniProtKB_ID", "GenBank_ID", "Entrez_Gene_ID", "Pfam_ID", "Locus_Tag"))
+    val nameExtents = extent(Seq("Gene_Name", "Protein_Name"))
+    val idExtents = extent(Seq("GenBank_ID", "Entrez_Gene_ID", "UniProtKB_ID", "Pfam_ID", "Locus_Tag"))
     val descExtent = extent(Seq("keyword", "Function_Info", "Gene_Desc", "Pfam_Desc", "InterPro_Desc", "GO_Term", "ISG_Desc",
       "Category", "Nomenclature", "KEGG_pathway_Desc", "EcoCyc_pathway_Name", "Feature_Desc", "PIRSF_Name",
       "Prosite_Desc", "InterPro_Desc", "Tissue_Specificity"))
@@ -71,17 +71,45 @@ class BioThesaususParser(stream:BufferedInputStream) extends BioParser[Node] {
     GalagoBioDocument(identifier, meta, nameExtents, idExtents, descExtent, goidExtent, speciesExtent, functionIdExtent, typeExtent)
 
   }
+
+  def getNames(elem:Node):BioNames = {
+//    val printer = new scala.xml.PrettyPrinter(90,2)
+//    val debug = new StringBuilder()
+//    printer.format(elem, debug)
+//    println(debug.toString())
+
+    val identifier = (elem \ "@Entry_ID").text
+
+
+    def contents(fields:Seq[String], splitFn:(String) => Iterable[String] = x => Seq(x), prefixFn:(String, String)=>String = (name,label) => name):Seq[String] = {
+      val elems =
+        for(names <- fields.flatMap(elem \\ _ )) yield {
+          for( n <- splitFn(names.text)) yield {
+            prefixFn(n, names.label)
+          }
+        }
+      elems.flatten.toSeq
+    }
+    val nameExtents = contents(Seq("Gene_Name", "Protein_Name"), splitFn=_.split(';').map(_.trim))
+    val idExtents =
+      Seq("GenBank_ID", "Entrez_Gene_ID", "UniProtKB_ID", "Pfam_ID", "Locus_Tag")
+        .map( field => {
+          val content = contents(Seq(field))
+          if(content.nonEmpty) Some( Tuple2(field, content) )
+          else None
+        })
+        .flatten.toMap
+
+    val species = contents(Seq("Organism", "Source_Organism", "Taxon_Group", "Taxon"))
+    val goTerms = contents(Seq("GO_ID"))
+
+    BioNames(identifier,  nameExtents, idExtents, species, goTerms)
+
+  }
 }
 
 object BioThesaususParser extends App {
   System.setProperty("file.encoding", "UTF8")
-
-//  val seg = new XmlSegmentIterator("./data/biothesaurus/iproclass.xml.gz")
-//  println(seg.take(10).mkString("\n\n"))
-
-//  println("======================")
-
-
 
   try {
     val filename = "./data/biothesaurus/iproclass.xml.gz"
@@ -98,7 +126,7 @@ object BioThesaususParser extends App {
   }
 }
 
-class XmlSegmentIterator(stream:BufferedInputStream) extends BufferedIterator[String] {
+class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
   val src= io.Source.fromInputStream(stream)
   val buffer = new Array[Char](1024*1024)
   val sb = new StringBuilder()

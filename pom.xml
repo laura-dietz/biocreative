@@ -32,35 +32,35 @@
             <url>http://repo1.maven.org/maven2</url>
         </repository>
 
-        <repository>
-            <id>IESL Releases</id>
-            <name>IESL Repo</name>
-            <url>https://dev-iesl.cs.umass.edu/nexus/content/groups/public</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>IESL Snapshots</id>
-            <name>IESL Repo</name>
-            <url>https://dev-iesl.cs.umass.edu/nexus/content/groups/public-snapshots</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>IESLSnapshotRepo</id>
-            <name>IESL Snapshot Repo</name>
-            <url>https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots</url>
-        </repository>
+        <!--<repository>-->
+            <!--<id>IESL Releases</id>-->
+            <!--<name>IESL Repo</name>-->
+            <!--<url>https://dev-iesl.cs.umass.edu/nexus/content/groups/public</url>-->
+            <!--<layout>default</layout>-->
+            <!--<snapshots>-->
+                <!--<enabled>false</enabled>-->
+            <!--</snapshots>-->
+            <!--<releases>-->
+                <!--<enabled>true</enabled>-->
+            <!--</releases>-->
+        <!--</repository>-->
+        <!--<repository>-->
+            <!--<id>IESL Snapshots</id>-->
+            <!--<name>IESL Repo</name>-->
+            <!--<url>https://dev-iesl.cs.umass.edu/nexus/content/groups/public-snapshots</url>-->
+            <!--<layout>default</layout>-->
+            <!--<snapshots>-->
+                <!--<enabled>true</enabled>-->
+            <!--</snapshots>-->
+            <!--<releases>-->
+                <!--<enabled>false</enabled>-->
+            <!--</releases>-->
+        <!--</repository>-->
+        <!--<repository>-->
+            <!--<id>IESLSnapshotRepo</id>-->
+            <!--<name>IESL Snapshot Repo</name>-->
+            <!--<url>https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots</url>-->
+        <!--</repository>-->
 
 
         <repository>
@@ -126,7 +126,7 @@
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
         </dependency>
-  
+
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
