@@ -34,11 +34,11 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         val text = (annotation \ "text").text
         val matches = tagger.tag(text)
 
-        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield infon.text).toSet
-        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text).toSet
+        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield infon.text.toLowerCase).toSet
+        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield infon.text.toLowerCase).toSet
 
-        val foundGene = matches.find(m => goldGene.contains(m.mention)).isDefined
-        val foundGo = matches.find(m => goldGo.contains(m.mention)).isDefined
+        val foundGene = matches.find(m => goldGene.contains(m.mention.toLowerCase)).isDefined
+        val foundGo = matches.find(m => goldGo.contains(m.mention.toLowerCase)).isDefined
         if(foundGene) counting.add("foundGene")
         if(foundGo) counting.add("foundGo")
         counting.add("allGene")
