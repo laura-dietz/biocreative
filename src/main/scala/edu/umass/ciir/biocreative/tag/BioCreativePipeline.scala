@@ -29,7 +29,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
       val offset = (passage \ "offset").text.toInt
 
       // only for training: nested annotation element
-      for(annotation <- passage){
+      for(annotation <- passage\\"annotation"){
 
         val text = (annotation \ "text").text
         val matches = tagger.tag(text)
