@@ -3,8 +3,14 @@ package edu.umass.ciir.biocreative.tag
 import java.io.{File, BufferedReader, InputStreamReader}
 import java.lang.ProcessBuilder.Redirect
 
+import edu.umass.ciir.biocreative.tag.MatchType.MatchType
 
-case class Match(lower: Int, upper: Int, mention: String)
+
+object MatchType extends Enumeration {
+  type MatchType = Value
+  val Exact, CaseInsensitive = Value
+}
+case class Match(lower: Int, upper: Int, mention: String, matchType:MatchType)
 
 /**
  * User: dietz
@@ -30,8 +36,8 @@ class FastNameTagger(val dictionaryFile:File) {
         return matches
       }
       val parts = line.split('\t')
-      assert(parts.length == 3)
-      matches :+= Match(parts(0).toInt, parts(1).toInt, parts(2))
+      assert(parts.length == 4, "response from name-tagger contained less than 4 parts "+parts)
+      matches :+= Match(parts(0).toInt, parts(1).toInt, parts(2), if(parts(3).toBoolean)MatchType.Exact else MatchType.CaseInsensitive)
     }
     throw new RuntimeException("This shouldn't happen")
   }
