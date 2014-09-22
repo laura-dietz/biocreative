@@ -53,10 +53,11 @@ class BioCreativePipeline(tagger:FastNameTagger) {
 object BioCreativePipeline {
   def main(args:Array[String]): Unit = {
     val dictionaryFile = MainTools.strsPlainFromArgs(args, "--dictionary=").headOption.getOrElse(throw new IllegalArgumentException("required flag --dictionary={dictionaryfile}"))
+    val articlesDir = MainTools.strsPlainFromArgs(args, "--articles=").headOption.getOrElse(throw new IllegalArgumentException("required flag --articles={dir}"))
 
 
     val tagger = new FastNameTagger(new java.io.File(dictionaryFile))
     val pipe = new BioCreativePipeline(tagger)
-    pipe.processAllDocuments(Directory("/home/dietz/biocreative/local/biocreative4-go/bc4go_dev_v081213/articles/"))
+    pipe.processAllDocuments(Directory(articlesDir))
   }
 }
