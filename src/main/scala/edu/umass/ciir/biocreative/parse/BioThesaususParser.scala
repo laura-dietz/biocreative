@@ -103,7 +103,12 @@ class BioThesaususParser(stream:InputStream) extends BioParser[Node] {
     val species = contents(Seq("Organism", "Source_Organism", "Taxon_Group", "Taxon"))
     val goTerms = contents(Seq("GO_ID"))
 
-    BioNames(identifier,  nameExtents, idExtents, species, goTerms)
+    val description = contents(Seq("keyword", "Function_Info", "Gene_Desc", "Pfam_Desc", "InterPro_Desc", "GO_Term", "ISG_Desc",
+      "Category", "Nomenclature", "KEGG_pathway_Desc", "EcoCyc_pathway_Name", "Feature_Desc", "PIRSF_Name",
+      "Prosite_Desc", "InterPro_Desc", "Tissue_Specificity"))
+
+
+    BioNames(identifier,  nameExtents, idExtents, species, goTerms, description)
 
   }
 }
