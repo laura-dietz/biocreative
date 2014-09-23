@@ -13,7 +13,7 @@ import scala.xml.Node
  * Time: 3:25 PM
  */
 class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) {
-  FileTools.makeDirs(outputDirectory.getName)
+  FileTools.makeDirs(outputDirectory.getAbsolutePath)
   val nameWriter = new FileWriter(outputDirectory.getName+File.separator+"Name.txt")
   val entrezGeneIdWriter = new FileWriter(outputDirectory.getName+File.separator+"Gene_ID.txt")
   val genBankIdWriter = new FileWriter(outputDirectory.getName+File.separator+"GenBank_ID.txt")
