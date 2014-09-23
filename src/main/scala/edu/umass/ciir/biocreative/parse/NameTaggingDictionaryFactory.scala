@@ -1,7 +1,7 @@
 package edu.umass.ciir.biocreative.parse
 
 import java.io._
-import java.util.zip.GZIPInputStream
+import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 
 import edu.umass.ciir.strepsi.{FileTools, MainTools}
 
@@ -14,15 +14,22 @@ import scala.xml.Node
  */
 class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) {
   FileTools.makeDirs(outputDirectory.getAbsolutePath)
-  val nameWriter = new FileWriter(outputDirectory.getName+File.separator+"Name.txt")
-  val entrezGeneIdWriter = new FileWriter(outputDirectory.getName+File.separator+"Gene_ID.txt")
-  val genBankIdWriter = new FileWriter(outputDirectory.getName+File.separator+"GenBank_ID.txt")
-  val goIdWriter = new FileWriter(outputDirectory.getName+File.separator+"GO_ID.txt")
-  val speciesWriter = new FileWriter(outputDirectory.getName+File.separator+"Species.txt")
+  def writer(filename:String):Writer = {
+    new OutputStreamWriter( new GZIPOutputStream( new FileOutputStream(filename)))
+  }
+  def plainWriter(filename:String):Writer = {
+    new FileWriter(filename)
+  }
+
+  val nameWriter = writer(outputDirectory.getName+File.separator+"Name.txt.gz")
+  val entrezGeneIdWriter = writer(outputDirectory.getName+File.separator+"Gene_ID.txt.gz")
+  val genBankIdWriter = writer(outputDirectory.getName+File.separator+"GenBank_ID.txt.gz")
+  val goIdWriter = writer(outputDirectory.getName+File.separator+"GO_ID.txt.gz")
+  val speciesWriter = writer(outputDirectory.getName+File.separator+"Species.txt.gz")
   val writers = Seq(nameWriter, entrezGeneIdWriter, genBankIdWriter, goIdWriter, speciesWriter)
-  //  val uniProtKbIdWriter = new FileWriter(outputDirectory.getName+File.separator+"UniProtKB_ID.txt")
-  //  val pfamIdWriter = new FileWriter(outputDirectory.getName+File.separator+"Pfam_ID.txt")
-  //  val locusTagWriter = new FileWriter(outputDirectory.getName+File.separator+"Locus_Tag.txt")
+  //  val uniProtKbIdWriter = writer(outputDirectory.getName+File.separator+"UniProtKB_ID.txt")
+  //  val pfamIdWriter = writer(outputDirectory.getName+File.separator+"Pfam_ID.txt")
+  //  val locusTagWriter = writer(outputDirectory.getName+File.separator+"Locus_Tag.txt")
 //  val idWriters = Map( "Entrez_Gene_ID" -> entrezGeneIdWriter, "GenBank_ID" -> genBankIdWriter, "UniProtKB_ID" -> uniProtKbIdWriter,
 //    "Pfam_ID" -> pfamIdWriter, "Locus_Tag" -> locusTagWriter)
 
