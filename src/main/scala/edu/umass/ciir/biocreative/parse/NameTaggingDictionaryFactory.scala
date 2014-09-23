@@ -43,8 +43,8 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) 
     var count: Int = -1
     var hasNext = nextDocument()
     while (hasNext) {
-      print(".")
-      if(count % 100==0) println()
+      if(count % 1000 ==0)print(".")
+      if(count % 100000==0) println()
       if (count == 0) {
         println("\nStopped.")
         hasNext =false
