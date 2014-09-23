@@ -162,20 +162,22 @@ class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
     } else {
 
       avail = reader.read(buffer)
-      sb.appendAll(buffer, 0, avail)
-      while (avail > 0 && !found) {
-        val opt = findNext()
-        if (opt.isDefined) {
-          found = true
-          head_ = opt.get
+      if(avail >0) {
+        sb.appendAll(buffer, 0, avail)
+        while (avail > 0 && !found) {
+          val opt = findNext()
+          if (opt.isDefined) {
+            found = true
+            head_ = opt.get
+          }
+          if (!found) {
+            avail = reader.read(buffer)
+            sb.appendAll(buffer, 0, avail)
+          }
         }
-        if (!found) {
-          avail = reader.read(buffer)
-          sb.appendAll(buffer, 0, avail)
+        if (avail <= 0 && !found) {
+          head_ = ""
         }
-      }
-      if(avail <=0 && !found) {
-        head_ = ""
       }
     }
   }
