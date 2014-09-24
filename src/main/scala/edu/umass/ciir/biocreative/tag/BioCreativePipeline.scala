@@ -1,6 +1,6 @@
 package edu.umass.ciir.biocreative.tag
 
-import edu.umass.ciir.biocreative.NameId
+import edu.umass.ciir.biocreative.{BioNamesWithNameIds, NameId}
 import edu.umass.ciir.biocreative.load.{LoadBioDocument, LoadNameIds}
 import edu.umass.ciir.biocreative.scrub.TextScrubber
 import edu.umass.ciir.biocreative.tag.BioCreativeAnnotationParser.BioCreativeAnnotatedDocument
@@ -18,19 +18,39 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
   val counting = new CountingTable[String]()
   val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
+//  val goTermMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/GO_ID.txt.gz.sorted.gz"))
   val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File("./name-tagger.bio/nameDict.cleaned.txt")).both
 
   val biocreativeAnnotationParser = new BioCreativeAnnotationParser(tagger, doTrain) 
   
   val bioDocumentTagger = new BioDocumentTagger(tagger)
-  def geneNameMatchesEntrez(nameId:NameId, entrezId:String):Boolean = {
-    entrezMap.get(entrezId) match {
+  def entrezEntry(entrezId:String):Option[BioNamesWithNameIds] = {
+    entrezMap.get(entrezId).map(bioNames => bioDocumentTagger.tag(bioNames))
+  }
+//  def goTermEntry(goTerm:String):Option[BioNamesWithNameIds] = {
+//    goTermMap.get(goTerm).map(bioNames => bioDocumentTagger.tag(bioNames))
+//  }
+  def existsInEntrez(nameId:NameId, entrezId:String):Boolean = {
+    entrezEntry(entrezId) match {
       case None => false
-      case Some(bionames) => {
-        val bioNamesWithNameIds = bioDocumentTagger.tag(bionames)
+      case Some(bioNamesWithNameIds) => {
         val where = bioNamesWithNameIds.contains(nameId)
-        if(where.isDefined) println(s"geneNameMatchesEntrez: $entrezId found $nameId in $where")
+//        if(where.isDefined) println(s"geneNameMatchesEntrez: $entrezId found $nameId in $where")
         where.isDefined
+      }
+    }
+  }
+
+  def countInEntry(nameId:NameId, entry:Option[BioNamesWithNameIds]):Double = {
+    entry match {
+      case None => 0.0
+      case Some(bioNamesWithNameIds) => {
+        val namesCount = bioNamesWithNameIds.namesNamesId.count(_ == nameId)
+        val speciesCount = bioNamesWithNameIds.speciesNamesIds.count(_ == nameId)
+        val goTermCount = bioNamesWithNameIds.goTerms.count(_ == nameId)
+        val descCount = bioNamesWithNameIds.description.count(_ == nameId)
+       
+        namesCount * 10.0 + speciesCount + goTermCount + descCount
       }
     }
   }
@@ -47,40 +67,81 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
 
   
   def processSingleDocumentTrain(doc:BioCreativeAnnotatedDocument)  {
-    for(passage <- doc.passages; annotation <- passage.annotations.get) {
-
-      println(doc.documentId + " " + passage.passageOffset + " " + annotation.annotationId)
+    println("======================================")
+    println("========"+doc.documentId+"===========")
+    
+    for(passage <- doc.passages) {
       val matches = tagger.tag(passage.text)
       val canonicalMatchNames = matches.map(m => id2name.get(m.nameId))
 
+      val goldGeneEntrez = passage.annotations.get.flatMap(_.goldGeneEntrez).distinct
+      val entrezAvgScore = matches.map(m => goldGeneEntrez.map(g => countInEntry(m.nameId, entrezEntry(g))).sum).sum / (matches.length*goldGeneEntrez.size)
+      val (foundGeneEntrez, missedGeneEntrez) = matches.partition(m => goldGeneEntrez.exists(gold => existsInEntrez(m.nameId, gold)))
 
-      val foundGeneSymbol = matches.find(m => annotation.goldGeneSymbol.contains(m.mention.toLowerCase))
-      val (foundGeneEntrez, missedGeneEntrez) = matches.partition(m => annotation.goldGeneEntrez.exists(gold => geneNameMatchesEntrez(m.nameId, gold)))
-      val foundGo = matches.find(m => annotation.goldGo.contains(m.mention.toLowerCase))
-      if (foundGeneSymbol.isDefined) counting.add("foundGeneSymbol")
+      val goldGeneSymbol = passage.annotations.get.flatMap(_.goldGeneSymbol).distinct
+      val geneSymbolAvgScore = 1.0 * matches.map(m => goldGeneSymbol.count(gold =>{
+        gold.toLowerCase.contains(m.mention.toLowerCase) || gold.toLowerCase.contains(id2name(m.nameId).toLowerCase)
+      })).sum  / (matches.length*goldGeneSymbol.size)
+      val (foundGeneSymbol, missedGeneSymbol) = matches.partition(m => goldGeneSymbol.exists(gold => {
+        gold.toLowerCase.contains(m.mention.toLowerCase) || gold.toLowerCase.contains(id2name(m.nameId).toLowerCase)
+      }))
+
+
+
+//      val goldGoTerms = passage.annotations.get.flatMap(_.goldGoTerm).distinct
+//      val goTermAvgScore = matches.map(m => goldGoTerms.map(g => countInEntry(m.nameId, goTermEntry(g))).sum).sum / (matches.length*goldGoTerms.size)
+
+
+      println("----"+doc.documentId+" offset:"+passage.passageOffset+" -----")
+      println(passage.text)
+      println(matches.map(_.mention))
+      println(canonicalMatchNames)
+      println("-- goldGeneSymbol = "+goldGeneSymbol)
+      println(s"foundGeneSymbol (${foundGeneSymbol.size}) = "+foundGeneSymbol.map(m => m.mention+"("+m.nameId+")"))
+      println(s"missedGeneSymbol (${missedGeneSymbol.size})) = "+missedGeneSymbol.map(m => m.mention+"("+m.nameId+")"))
+      println(s"geneSymbolAvgScore = $geneSymbolAvgScore")
+      println("-- goldGeneEntrez = "+goldGeneEntrez)
+      println(s"foundGeneEntrez (${foundGeneEntrez.size}) = "+foundGeneEntrez.map(m => m.mention+"("+m.nameId+")"))
+      println(s"missedGeneEntrez (${missedGeneEntrez.size})) = "+missedGeneEntrez.map(m => m.mention+"("+m.nameId+")"))
+      println(s"entrezAvgScore = $entrezAvgScore")
+//      println("-- goldGoTerms = "+goldGoTerms)
+//      println(s"goTermAvgScore = $goTermAvgScore")
+
+
+//      val foundGoTerm = matches.find(m => goldGoTerms.contains(m.mention.toLowerCase))
+      if (foundGeneSymbol.nonEmpty) counting.add("foundGeneSymbol")
       if (foundGeneEntrez.nonEmpty) counting.add("foundEntrez")
-      if (foundGo.isDefined) counting.add("foundGo")
-      counting.add("allGene")
-      counting.add("allGo")
+//      if (foundGoTerm.isDefined) counting.add("foundGoTerm")
+      counting.add("allGeneSymbol")
+      counting.add("allGoTerm")
       counting.add("allEntrez")
 
-      println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(passage.text, virtualSpace = true)}")
-      println(s"offset: ${passage.passageOffset} \t ${passage.text} \n Matches: " + matches.mkString(", ") + " \n " +
-        "goldMatches Entrez: " + foundGeneEntrez.map("##" + _.mention + "##").mkString(", ") + " -- " +
-        missedGeneEntrez.map(_.mention).mkString(", ") + "\n" +
-        "canonical match names: " + canonicalMatchNames.mkString(", ") + "\n" +
-        "goldMatches Gene: " + annotation.goldGeneSymbol.map(x => if (foundGeneSymbol.isDefined && foundGeneSymbol.get.mention == x) {
-        "##" + x + "##"
-      } else x).mkString(", ") + " " +
-        "Go:" + annotation.goldGo.mkString(","))
+
+      //      for(annotation <- passage.annotations.get) {
+//
+//        println(doc.documentId + " " + passage.passageOffset + " " + annotation.annotationId)
+//
+//
+//
+//
+//        println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(passage.text, virtualSpace = true)}")
+//        println(s"offset: ${passage.passageOffset} \t ${passage.text} \n Matches: " + matches.mkString(", ") + " \n " +
+//          "goldMatches Entrez: " + foundGeneEntrez.map("##" + _.mention + "##").mkString(", ") + " -- " +
+//          missedGeneEntrez.map(_.mention).mkString(", ") + "\n" +
+//          "canonical match names: " + canonicalMatchNames.mkString(", ") + "\n" +
+//          "goldMatches Gene: " + annotation.goldGeneSymbol.map(x => if (foundGeneSymbol.isDefined && foundGeneSymbol.get.mention == x) {
+//          "##" + x + "##"
+//        } else x).mkString(", ") + " " +
+//          "Go:" + annotation.goldGo.mkString(","))
+//      }
     }
 
 
 
     val entrezRecall = 1.0 * counting.getOrElse("foundEntrez", 0) / counting.getOrElse("allEntrez", 0)
-    val geneRecall = 1.0 * counting.getOrElse("foundGene", 0) / counting.getOrElse("allGene", 0)
-    val goRecall = 1.0 * counting.getOrElse("foundGo", 0) / counting.getOrElse("allGo", 0)
-    println(s" entrezRecall=$entrezRecall\tgeneRecall=$geneRecall\tgoRecall=$goRecall")
+    val geneRecall = 1.0 * counting.getOrElse("foundGeneSymbol", 0) / counting.getOrElse("allGeneSymbol", 0)
+    val goRecall = 1.0 * counting.getOrElse("foundGoTerm", 0) / counting.getOrElse("allGoTerm", 0)
+    println(s" entrezRecall=$entrezRecall\tgeneSymbolRecall=$geneRecall\tgoRecall=$goRecall")
 
   }
 

@@ -33,10 +33,19 @@ class BioCreativeAnnotationParser(tagger:FastNameTagger, doTrain:Boolean) {
       geneAnnotation
     }
   }
-  def cleanGoldGo(goAnnotation: String) = {
+  def cleanGoldGoDescr(goAnnotation: String) = {
     val offset = goAnnotation.indexOf('|')
     if(offset>=0)
       goAnnotation.substring(0, offset).trim
+    else {
+      System.err.println("Tried to clean go annotation, but could not find delimiter \'|\'. "+goAnnotation)
+      goAnnotation
+    }
+   }
+  def cleanGoldGoTerm(goAnnotation: String) = {
+    val offset = goAnnotation.indexOf('|')
+    if(offset>=0 && (offset+1)<goAnnotation.length)
+      goAnnotation.substring(offset+1).trim
     else {
       System.err.println("Tried to clean go annotation, but could not find delimiter \'|\'. "+goAnnotation)
       goAnnotation
@@ -68,11 +77,12 @@ class BioCreativeAnnotationParser(tagger:FastNameTagger, doTrain:Boolean) {
 
         val goldGeneSymbol = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield cleanGoldGeneSymbol(infon.text).toLowerCase).toSet
         val goldGeneEntrez = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield cleanGoldGeneEntrez(infon.text).toLowerCase).toSet
-        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGo(infon.text).toLowerCase).toSet
+        val goldGoDesc = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGoDescr(infon.text).toLowerCase).toSet
+        val goldGoTerm = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGoTerm(infon.text).toLowerCase).toSet
 
         val annotationId = (annotation\ "@id").text
 
-        annotationList += BioCreativeAnnotation(annotationId, goldGeneSymbol, goldGeneEntrez, goldGo)
+        annotationList += BioCreativeAnnotation(annotationId, goldGeneSymbol, goldGeneEntrez, goldGoDesc, goldGoTerm)
       }
       if(annotationList.nonEmpty){
         passageList += BioCreativeAnnotatedPassage(offset, passagetext, Some(annotationList.result()))
@@ -122,7 +132,7 @@ class BioCreativeAnnotationParser(tagger:FastNameTagger, doTrain:Boolean) {
 }
 
 object BioCreativeAnnotationParser {
-  case class BioCreativeAnnotation(annotationId:String, goldGeneSymbol:Set[String], goldGeneEntrez:Set[String], goldGo:Set[String])
+  case class BioCreativeAnnotation(annotationId:String, goldGeneSymbol:Set[String], goldGeneEntrez:Set[String], goldGoDesc:Set[String],goldGoTerm:Set[String])
   case class BioCreativeAnnotatedPassage(passageOffset:Int, text:String, annotations:Option[Seq[BioCreativeAnnotation]])
   case class BioCreativeAnnotatedDocument(documentId:String, passages:Seq[BioCreativeAnnotatedPassage])
 }
