@@ -3,6 +3,7 @@ package edu.umass.ciir.biocreative.tag
 import java.io.{File, BufferedReader, InputStreamReader}
 import java.lang.ProcessBuilder.Redirect
 
+import edu.umass.ciir.biocreative.scrub.TextScrubber
 import edu.umass.ciir.biocreative.tag.MatchType.MatchType
 
 import scala.collection.mutable.ListBuffer
@@ -11,7 +12,12 @@ object MatchType extends Enumeration {
   type MatchType = Value
   val Exact, CaseInsensitive = Value
 }
-case class Match(lower: Int, upper: Int, mention: String, matchType:MatchType)
+case class Match(lower: Int, upper: Int, mention: String, matchType:MatchType) {
+  def correctOffset(shift:Int=0, max:Int = Integer.MAX_VALUE, min:Int = Integer.MIN_VALUE):Match = {
+    def minmax(i:Int) =if(i<min) min else if (i>max) max else i
+    Match(minmax(lower+shift),minmax(upper+shift), mention, matchType)
+  }
+}
 
 import scala.collection.JavaConversions._
 
@@ -20,7 +26,7 @@ import scala.collection.JavaConversions._
  * Date: 9/21/14
  * Time: 4:06 PM
  */
-class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsensitiveMatch:Boolean) {
+class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsensitiveMatch:Boolean, textScrubber:(String)=>String) {
   val flags = new ListBuffer[String]()
   if(wholeWordMatch) flags += "-w"
   if(caseInsensitiveMatch) flags += "-i"
@@ -31,6 +37,10 @@ class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsens
   val proc = pb.start()
 
   def tag(doc: String): Seq[Match] = {
+    val scrubDoc = " " + textScrubber(doc) + " "
+    internalTag(scrubDoc).map(_.correctOffset(shift = -1, min = 0, max = doc.length))
+  }
+  protected def internalTag(doc:String): Seq[Match] = {
     proc.getOutputStream.write(doc.getBytes("UTF-8"))
     proc.getOutputStream.write("\n".getBytes("UTF-8"))
     proc.getOutputStream.flush()
@@ -58,7 +68,7 @@ class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsens
 
 object FastNameTagger {
   def main(args:Array[String]): Unit = {
-    val tagger = new FastNameTagger(new File("./data/names.txt"), wholeWordMatch = true, caseInsensitiveMatch = false)
+    val tagger = new FastNameTagger(new File("./data/names.txt"), wholeWordMatch = true, caseInsensitiveMatch = false, TextScrubber.scrubSentencePunctuation(_, virtualSpace = false))
 
     tagger.tag("Laura Dietz lives in Massachusetts.")
     tagger.tag("In Amherst is the University of Massachusetts located. Where are you located?")

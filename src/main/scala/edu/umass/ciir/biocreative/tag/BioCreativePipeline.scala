@@ -1,5 +1,6 @@
 package edu.umass.ciir.biocreative.tag
 
+import edu.umass.ciir.biocreative.scrub.TextScrubber
 import edu.umass.ciir.strepsi.{CountingTable, MainTools}
 
 import scala.reflect.io.{Directory, File}
@@ -63,6 +64,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
         counting.add("allGene")
         counting.add("allGo")
 
+        println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(text, virtualSpace=true)}")
         println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", ")+" \n " +
           "goldMatches Gene: "+goldGene.map(x => if(foundGene.isDefined && foundGene.get.mention == x) { "##"+x+"##"} else x).mkString(", ")+ " " +
           "Go:"+goldGo.mkString(","))
@@ -113,9 +115,7 @@ object BioCreativePipeline {
     val articlesDir = MainTools.strsPlainFromArgs(args, "--articles=").headOption.getOrElse(throw new IllegalArgumentException("required flag --articles={dir}"))
     val doTrain = MainTools.strsPlainFromArgs(args, "--train").nonEmpty
 
-
-
-    val tagger = new FastNameTagger(new java.io.File(dictionaryFile), wholeWordMatch = true, caseInsensitiveMatch = true)
+    val tagger = new FastNameTagger(new java.io.File(dictionaryFile), wholeWordMatch = true, caseInsensitiveMatch = true, TextScrubber.scrubSentencePunctuation(_,virtualSpace = false))
     val pipe = new BioCreativePipeline(tagger, doTrain)
     pipe.processAllDocuments(Directory(articlesDir))
   }
