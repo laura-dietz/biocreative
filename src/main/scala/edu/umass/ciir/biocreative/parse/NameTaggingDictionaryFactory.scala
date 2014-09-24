@@ -21,15 +21,15 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File, 
     new FileWriter(filename)
   }
 
-  val nameWriter = writer(outputDirectory.getName+File.separator+"Name.dict.gz")
-  val entrezGeneIdWriter = writer(outputDirectory.getName+File.separator+"Entrez_Gene_ID.txt.gz")
-  val genBankIdWriter = writer(outputDirectory.getName+File.separator+"GenBank_ID.txt.gz")
-  val goIdWriter = writer(outputDirectory.getName+File.separator+"GO_ID.txt.gz")
-  val speciesWriter = writer(outputDirectory.getName+File.separator+"Species.txt.gz")
+  val nameWriter = writer(outputDirectory.getAbsolutePath+File.separator+"Name.dict.gz")
+  val entrezGeneIdWriter = writer(outputDirectory.getAbsolutePath+File.separator+"Entrez_Gene_ID.txt.gz")
+  val genBankIdWriter = writer(outputDirectory.getAbsolutePath+File.separator+"GenBank_ID.txt.gz")
+  val goIdWriter = writer(outputDirectory.getAbsolutePath+File.separator+"GO_ID.txt.gz")
+  val speciesWriter = writer(outputDirectory.getAbsolutePath+File.separator+"Species.txt.gz")
   val writers = Seq(nameWriter, entrezGeneIdWriter, genBankIdWriter, goIdWriter, speciesWriter)
-  //  val uniProtKbIdWriter = writer(outputDirectory.getName+File.separator+"UniProtKB_ID.txt")
-  //  val pfamIdWriter = writer(outputDirectory.getName+File.separator+"Pfam_ID.txt")
-  //  val locusTagWriter = writer(outputDirectory.getName+File.separator+"Locus_Tag.txt")
+  //  val uniProtKbIdWriter = writer(outputDirectory.getAbsolutePath+File.separator+"UniProtKB_ID.txt")
+  //  val pfamIdWriter = writer(outputDirectory.getAbsolutePath+File.separator+"Pfam_ID.txt")
+  //  val locusTagWriter = writer(outputDirectory.getAbsolutePath+File.separator+"Locus_Tag.txt")
 //  val idWriters = Map( "Entrez_Gene_ID" -> entrezGeneIdWriter, "GenBank_ID" -> genBankIdWriter, "UniProtKB_ID" -> uniProtKbIdWriter,
 //    "Pfam_ID" -> pfamIdWriter, "Locus_Tag" -> locusTagWriter)
 
