@@ -3,6 +3,8 @@ package edu.umass.ciir.biocreative.parse
 import java.io.{InputStream, BufferedInputStream, FileInputStream}
 import java.util.zip.GZIPInputStream
 
+import edu.umass.ciir.biocreative.BioNames
+
 //import javax.xml.stream.XMLEventReader
 
 import scala.xml.pull.XMLEvent

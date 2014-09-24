@@ -135,15 +135,14 @@ object NameTaggingDictionaryFactory {
     factory.close()
 
 
-    println(" run this in "+outDir)
+    println("now run this!")
     println("cd "+outDir)
-    println("for f in *txt; do sort -u $f > $f.sorted; done")
-    println("for f in *txt; do sort --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 $f | gzip > $f.sorted; done")
-    println("zcat Name.txt.gz | cut -f1 | sort -u --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 | awk '{ print FNR \"\\t\" $0 }' | gzip > nameDict.txt.gz")
-
+    println("for f in *txt.gz; do zcat $f | sort --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 -o $f.sorted; done")
+    println("zcat Name.dict.gz | cut -f1 | sort -u --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 | aw\nk '{ print FNR \"\\t\" $0 }' > nameDict.txt")
+    println("grep -e \"[a-Z][a-Z]\" nameDict.txt > nameDict.cleaned.txt")
 
     // zcat biothesarus/Name.txt.bak.gz |head -n 1000 | cut -f1 | sort -u --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 | awk '{ print FNR "\t" $0 }' | gzip > biothesarus/nameDict.bak.txt.gz
 
-    println("for name tagger, clean the dictionary with\nzgrep -e \"[a-Z][a-Z]\"")
+
   }
 }

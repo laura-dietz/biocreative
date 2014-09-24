@@ -1,10 +1,12 @@
 package edu.umass.ciir.biocreative.tag
 
+import edu.umass.ciir.biocreative.NameId
+import edu.umass.ciir.biocreative.load.{LoadBioDocument, LoadNameIds}
 import edu.umass.ciir.biocreative.scrub.TextScrubber
+import edu.umass.ciir.biocreative.tag.BioCreativeAnnotationParser.BioCreativeAnnotatedDocument
 import edu.umass.ciir.strepsi.{CountingTable, MainTools}
 
-import scala.reflect.io.{Directory, File}
-import scala.xml.XML
+import scala.reflect.io.Directory
 
 /**
  * User: dietz
@@ -15,97 +17,77 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
   System.setProperty("file.encoding","UTF-8")
 
   val counting = new CountingTable[String]()
+  val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
+  val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File("./name-tagger.bio/nameDict.cleaned.txt")).both
 
-  def cleanGoldGene(geneAnnotation: String) = {
-    val offset = geneAnnotation.indexOf('(')
-    if(offset >=0)
-      geneAnnotation.substring(0, offset).trim
-    else {
-      System.err.println("Tried to clean gene annotation, but count not find delimiter \'(\'. "+geneAnnotation)
-      geneAnnotation
-    }
-  }
-  def cleanGoldGo(goAnnotation: String) = {
-    val offset = goAnnotation.indexOf('|')
-    if(offset>=0)
-      goAnnotation.substring(0, offset).trim
-    else {
-      System.err.println("Tried to clean go annotation, but could not find delimiter \'|\'. "+goAnnotation)
-      goAnnotation
-    }
-   }
-
-  def processSingleDocumentTrain(file: File) = {
-    val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
-
-    val documentId  = ((root \\ "document").head \ "id").text
-
-    println("=========================================")
-    println("====== "+documentId+ " ===================")
-
-
-
-    for(passage <- root \\ "passage"){
-      val offset = (passage \ "offset").text.toInt
-
-      // only for training: nested annotation element
-      for(annotation <- passage\\"annotation"){
-
-        val text = (annotation \ "text").text
-        val matches = tagger.tag(text)
-
-        val goldGene = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "gene") yield cleanGoldGene(infon.text).toLowerCase).toSet
-        val goldGo = (for(infon <- (annotation \\ "infon"); if (infon\"@key").text == "go-term") yield cleanGoldGo(infon.text).toLowerCase).toSet
-
-        val foundGene = matches.find(m => goldGene.contains(m.mention.toLowerCase))
-        val foundGo = matches.find(m => goldGo.contains(m.mention.toLowerCase))
-        if(foundGene.isDefined) counting.add("foundGene")
-        if(foundGo.isDefined) counting.add("foundGo")
-        counting.add("allGene")
-        counting.add("allGo")
-
-        println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(text, virtualSpace=true)}")
-        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", ")+" \n " +
-          "goldMatches Gene: "+goldGene.map(x => if(foundGene.isDefined && foundGene.get.mention == x) { "##"+x+"##"} else x).mkString(", ")+ " " +
-          "Go:"+goldGo.mkString(","))
+  val biocreativeAnnotationParser = new BioCreativeAnnotationParser(tagger, doTrain) 
+  
+  val bioDocumentTagger = new BioDocumentTagger(tagger)
+  def geneNameMatchesEntrez(nameId:NameId, entrezId:String):Boolean = {
+    entrezMap.get(entrezId) match {
+      case None => false
+      case Some(bionames) => {
+        val bioNamesWithNameIds = bioDocumentTagger.tag(bionames)
+        val where = bioNamesWithNameIds.contains(nameId)
+        if(where.isDefined) println(s"geneNameMatchesEntrez: $entrezId found $nameId in $where")
+        where.isDefined
       }
-
     }
-
-    val geneRecall = 1.0 * counting.getOrElse("foundGene", 0) / counting.getOrElse("allGene", 0)
-    val goRecall = 1.0 * counting.getOrElse("foundGo", 0) / counting.getOrElse("allGo", 0)
-    println(s" geneRecall=$geneRecall\tgoRecall=$goRecall")
-  }
-
-  def processSingleDocumentTest(file: File) = {
-    val root = XML.loadFile(new java.io.File(file.toAbsolute.path))
-
-    val documentId  = ((root \\ "document").head \ "id").text
-
-    println("=========================================")
-    println("====== "+documentId+ " ===================")
-
-
-
-    for(passage <- root \\ "passage"){
-      val offset = (passage \ "offset").text.toInt
-
-      val text = (passage \ "text").text
-      val matches = tagger.tag(text)
-        println(s"offset: $offset \t $text \n Matches: "+matches.mkString(", "))
-    }
-
   }
 
   def processAllDocuments(dir: Directory): Unit = {
-     for(file <- dir.list; if file.isFile && file.hasExtension("xml")) {
-       if (doTrain) {
-         processSingleDocumentTrain(file.toFile)
-       } else {
-         processSingleDocumentTest(file.toFile)
-       }
-     }
+    for (doc <- biocreativeAnnotationParser.processAllDocuments(dir)) {
+      if (doTrain) {
+        processSingleDocumentTrain(doc)
+      } else {
+        processSingleDocumentTest(doc)
+      }
+    }
   }
+
+  
+  def processSingleDocumentTrain(doc:BioCreativeAnnotatedDocument)  {
+    for(passage <- doc.passages; annotation <- passage.annotations.get) {
+
+      println(doc.documentId + " " + passage.passageOffset + " " + annotation.annotationId)
+      val matches = tagger.tag(passage.text)
+      val canonicalMatchNames = matches.map(m => id2name.get(m.nameId))
+
+
+      val foundGeneSymbol = matches.find(m => annotation.goldGeneSymbol.contains(m.mention.toLowerCase))
+      val (foundGeneEntrez, missedGeneEntrez) = matches.partition(m => annotation.goldGeneEntrez.exists(gold => geneNameMatchesEntrez(m.nameId, gold)))
+      val foundGo = matches.find(m => annotation.goldGo.contains(m.mention.toLowerCase))
+      if (foundGeneSymbol.isDefined) counting.add("foundGeneSymbol")
+      if (foundGeneEntrez.nonEmpty) counting.add("foundEntrez")
+      if (foundGo.isDefined) counting.add("foundGo")
+      counting.add("allGene")
+      counting.add("allGo")
+      counting.add("allEntrez")
+
+      println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(passage.text, virtualSpace = true)}")
+      println(s"offset: ${passage.passageOffset} \t ${passage.text} \n Matches: " + matches.mkString(", ") + " \n " +
+        "goldMatches Entrez: " + foundGeneEntrez.map("##" + _.mention + "##").mkString(", ") + " -- " +
+        missedGeneEntrez.map(_.mention).mkString(", ") + "\n" +
+        "canonical match names: " + canonicalMatchNames.mkString(", ") + "\n" +
+        "goldMatches Gene: " + annotation.goldGeneSymbol.map(x => if (foundGeneSymbol.isDefined && foundGeneSymbol.get.mention == x) {
+        "##" + x + "##"
+      } else x).mkString(", ") + " " +
+        "Go:" + annotation.goldGo.mkString(","))
+    }
+
+
+
+    val entrezRecall = 1.0 * counting.getOrElse("foundEntrez", 0) / counting.getOrElse("allEntrez", 0)
+    val geneRecall = 1.0 * counting.getOrElse("foundGene", 0) / counting.getOrElse("allGene", 0)
+    val goRecall = 1.0 * counting.getOrElse("foundGo", 0) / counting.getOrElse("allGo", 0)
+    println(s" entrezRecall=$entrezRecall\tgeneRecall=$geneRecall\tgoRecall=$goRecall")
+
+  }
+
+  def processSingleDocumentTest(document: BioCreativeAnnotatedDocument) = {
+    throw new NotImplementedError()
+  }
+
 
 }
 
