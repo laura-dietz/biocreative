@@ -125,9 +125,11 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File, 
 
 object NameTaggingDictionaryFactory {
   def main(args:Array[String]): Unit ={
-    val outDir = MainTools.strsFromArgs(args, "--outDir=", 1).head
-    val biothesaurusFile= MainTools.strsFromArgs(args, "--biothesaurus=", 1).head
-    val maxEntries= MainTools.strsFromArgs(args, "--maxEntries=", 0).headOption.getOrElse("-1").toInt
+    val outDir = MainTools.strsFromArgsSimple(args, "--outDir=", 1).head
+    val biothesaurusFile= MainTools.strsFromArgsSimple(args, "--biothesaurus=", 1).head
+    val maxEntries= MainTools.strsFromArgsSimple(args, "--maxEntries=", 0).headOption.getOrElse("-1").toInt
+
+    println(s"Running: NameTaggingDictionaryFactory --outDir=$outDir --biothesaurus=$biothesaurusFile --maxEntries=$maxEntries")
     val factory = new NameTaggingDictionaryFactory(new File(outDir),new File(biothesaurusFile), maxEntries = maxEntries)
     factory.write()
     factory.close()
