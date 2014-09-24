@@ -12,7 +12,7 @@ import scala.xml.Node
  * Date: 9/22/14
  * Time: 3:25 PM
  */
-class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) {
+class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File, val maxEntries:Int = -1) {
   FileTools.makeDirs(outputDirectory.getAbsolutePath)
   def writer(filename:String):Writer = {
     new OutputStreamWriter( new GZIPOutputStream( new FileOutputStream(filename)))
@@ -21,8 +21,8 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) 
     new FileWriter(filename)
   }
 
-  val nameWriter = writer(outputDirectory.getName+File.separator+"Name.txt.gz")
-  val entrezGeneIdWriter = writer(outputDirectory.getName+File.separator+"Gene_ID.txt.gz")
+  val nameWriter = writer(outputDirectory.getName+File.separator+"Name.dict.gz")
+  val entrezGeneIdWriter = writer(outputDirectory.getName+File.separator+"Entrez_Gene_ID.txt.gz")
   val genBankIdWriter = writer(outputDirectory.getName+File.separator+"GenBank_ID.txt.gz")
   val goIdWriter = writer(outputDirectory.getName+File.separator+"GO_ID.txt.gz")
   val speciesWriter = writer(outputDirectory.getName+File.separator+"Species.txt.gz")
@@ -47,11 +47,14 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File) 
   val iter = parser.iterator()
 
   def write() {
-    var count: Int = -1
+    var count: Int = maxEntries
     var hasNext = nextDocument()
     while (hasNext) {
       if(count % 1000 ==0)print(".")
-      if(count % 100000==0) println()
+      if(count % 100000==0) {
+        println()
+        writers.foreach(_.flush())
+      }
       if (count == 0) {
         println("\nStopped.")
         hasNext =false
@@ -124,14 +127,21 @@ object NameTaggingDictionaryFactory {
   def main(args:Array[String]): Unit ={
     val outDir = MainTools.strsFromArgs(args, "--outDir=", 1).head
     val biothesaurusFile= MainTools.strsFromArgs(args, "--biothesaurus=", 1).head
-    val factory = new NameTaggingDictionaryFactory(new File(outDir),new File(biothesaurusFile))
+    val maxEntries= MainTools.strsFromArgs(args, "--maxEntries=", 0).headOption.getOrElse("-1").toInt
+    val factory = new NameTaggingDictionaryFactory(new File(outDir),new File(biothesaurusFile), maxEntries = maxEntries)
     factory.write()
     factory.close()
 
 
     println(" run this in "+outDir)
     println("cd "+outDir)
-    println("for f in *txt; do sort -u -t\\t $f > $f.sorted; done")
-    println("cut -f1 Name.txt.sorted | uniq | nl -nln -s\\t  > nameDict.txt")
+    println("for f in *txt; do sort -u $f > $f.sorted; done")
+    println("for f in *txt; do sort --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 $f | gzip > $f.sorted; done")
+    println("zcat Name.txt.gz | cut -f1 | sort -u --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 | awk '{ print FNR \"\\t\" $0 }' | gzip > nameDict.txt.gz")
+
+
+    // zcat biothesarus/Name.txt.bak.gz |head -n 1000 | cut -f1 | sort -u --temporary-directory=/mnt/scratch2/tmp/ --compress-program=gzip --parallel=3 | awk '{ print FNR "\t" $0 }' | gzip > biothesarus/nameDict.bak.txt.gz
+
+    println("for name tagger, clean the dictionary with\nzgrep -e \"[a-Z][a-Z]\"")
   }
 }
