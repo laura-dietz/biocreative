@@ -3,8 +3,8 @@ package edu.umass.ciir.biocreative.load
 import java.io._
 import java.util.zip.GZIPInputStream
 
-import edu.umass.ciir.biocreative.{Name, BioNames}
-import edu.umass.ciir.strepsi.SeqTools
+import edu.umass.ciir.biocreative.{BioNames, Name}
+import edu.umass.ciir.strepsimur.DiskBacking
 
 import scala.collection.mutable.ListBuffer
 
@@ -32,11 +32,7 @@ object LoadBioDocument {
         prevId = id
       }
 
-      val names = chunks(2).split("\" \"")
-      val otherIds = SeqTools.groupByKey( chunks(3).split("\\) \\(").map(_.split(",")).map(x => x(0) -> x(1))).map(pair => (pair._1 -> pair._2.toSeq))
-      val goTerms = chunks(5).split(" ")
-      val species = chunks(4).split("\" \"")
-      val bioname = BioNames(id, names, otherIds, species, goTerms, Seq(chunks(6)))
+      val bioname = BioNames.deserialize(chunks)
       bioNameBuffer += bioname
 
     }
@@ -44,4 +40,12 @@ object LoadBioDocument {
     resultMap.toMap
   }
 
+
+
+  def convertToDiskBacker(inputFile:String, outputFile:String) = {
+
+      val nameToBioNames = loadMap(new java.io.File(inputFile))
+      val stringstringMap = nameToBioNames.map(x => x._1 -> x._2.toString)
+      DiskBacking.createStringStringDiskBackingImm(stringstringMap, outputFile)
+  }
 }

@@ -139,7 +139,7 @@ class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
   val sb = new StringBuilder()
   val reader = src.bufferedReader()
   var head_ = ""
-  var avail = 1
+  var _hasNext = true
 
   def findNext():Option[String] = {
     val begin = sb.indexOf("<iProClassEntry")
@@ -147,7 +147,7 @@ class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
       val end = sb.indexOf("</iProClassEntry>", begin + 1)
       if (end > -1) {
         val endend = end + "</iProClassEntry>".length
-        head_ = sb.substring(begin, endend)
+        val head_ = sb.substring(begin, endend)
         sb.delete(0, endend)
         return Some(head_)
       }
@@ -159,27 +159,46 @@ class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
     var found = false
     val opt = findNext()
     if (opt.isDefined) {
+      // we have another entry in the buffer
       found = true
+      _hasNext = true
       head_ = opt.get
     } else {
-
-      avail = reader.read(buffer)
+      // we need to read more...
+      var avail = reader.read(buffer)
       if(avail >0) {
+        // still stuff that we could read
+
         sb.appendAll(buffer, 0, avail)
         while (avail > 0 && !found) {
           val opt = findNext()
           if (opt.isDefined) {
+            // we read enough to find another entry
+            _hasNext = true
             found = true
             head_ = opt.get
           }
           if (!found) {
+            // keep on reading!
             avail = reader.read(buffer)
             sb.appendAll(buffer, 0, avail)
           }
         }
+        // if found, we should end the loop
+
         if (avail <= 0 && !found) {
+          // we quit the loop, because we hit the end of the stream - not because we found something.
+
+          found = false
+          _hasNext = false
           head_ = ""
         }
+      } else {
+        // on the first attempt to read something, we hit the end of the stream
+
+        found = false
+        _hasNext = false
+        head_ = ""
       }
     }
   }
@@ -192,7 +211,7 @@ class XmlSegmentIterator(stream:InputStream) extends BufferedIterator[String] {
     result
   }
 
-  override def hasNext = head_ != ""
+  override def hasNext = _hasNext
 
 }
 

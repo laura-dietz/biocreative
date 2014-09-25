@@ -3,6 +3,7 @@ package edu.umass.ciir.biocreative.parse
 import java.io._
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 
+import edu.umass.ciir.biocreative.BioNames
 import edu.umass.ciir.strepsi.{FileTools, MainTools}
 
 import scala.xml.Node
@@ -80,21 +81,24 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File, 
   var entryIdProvider = new IdProvider(0)
 
   def nextDocument(): Boolean = {
+    def clean(seq:Seq[String]):Seq[String] ={
+      seq.map(_.replaceAll("\\s+"," "))
+    }
+
+    def cleanAndUnwrap(seq:Seq[String]):Seq[String] ={
+      seq.map({
+        _.replaceAllLiterally("\n"," ").replaceAllLiterally("\r"," ").replaceAllLiterally("\t"," ").replaceAll("\\s+"," ")
+      })
+    }
+
     if (iter.hasNext) {
       val entry: Node = iter.next()
-      val bioDocument = parser.getNames(entry)
+      val dirty = parser.getNames(entry)
+      val bioDocument = BioNames(dirty.identifier,clean(dirty.names), dirty.otherIds, clean(dirty.species), clean(dirty.goTerms), cleanAndUnwrap(dirty.description))
 
-      val id = bioDocument.identifier
-            
-      val allNames = bioDocument.names.distinct.map("\"" + _.replaceAllLiterally("\"","") + "\"").mkString(" ")
-      val allIds = bioDocument.otherIds.toSeq.flatMap(pair => pair._2.sorted.map(pair._1 -> _)).mkString(" ")
-      val allGoTerms = bioDocument.goTerms.mkString(" ")
-      val allSpecies = bioDocument.species.distinct.map("\"" + _.replaceAllLiterally("\"","") + "\"").mkString(" ")
-      val description = bioDocument.description.mkString(" ").replaceAllLiterally("\n"," ").replaceAllLiterally("\t"," ")
-
-      val appendix = Seq(id, allNames, allIds, allGoTerms, allSpecies, description).mkString("\t")
+      val appendix = BioNames.serialize(bioDocument).mkString("\t")
       for(name <- (bioDocument.names ++ bioDocument.species).distinct){
-        nameWriter.write(name+"\t"+id+"\n")
+        nameWriter.write(name+"\t" + bioDocument.identifier +"\n")
       }
 
       for( geneid <- bioDocument.otherIds.getOrElse("Entrez_Gene_ID", Seq.empty); if !geneid.trim.isEmpty ) {

@@ -1,6 +1,6 @@
 package edu.umass.ciir
 
-import edu.umass.ciir.strepsi.SeqTools
+import edu.umass.ciir.strepsi.{StringTools, SeqTools}
 
 /**
  * User: dietz
@@ -45,6 +45,58 @@ package object biocreative {
 
       BioNames(id, names, otherIds, species, goTerms, Seq(description))
 
+    }
+
+    def serialize0(bioDocument:BioNames):Seq[String] = {
+      val id = bioDocument.identifier
+      val allNames = bioDocument.names.distinct.map("\"" + _.replaceAllLiterally("\"","") + "\"").mkString(" ")
+      val allIds = bioDocument.otherIds.toSeq.flatMap(pair => pair._2.sorted.map(pair._1 -> _)).mkString(" ")
+      val allGoTerms = bioDocument.goTerms.mkString(" ")
+      val allSpecies = bioDocument.species.distinct.map("\"" + _.replaceAllLiterally("\"","") + "\"").mkString(" ")
+      val description = bioDocument.description.mkString(" ").replaceAllLiterally("\n"," ").replaceAllLiterally("\t"," ")
+
+      val serialTabs = Seq(id, allNames, allIds, allGoTerms, allSpecies, description)
+      serialTabs
+    }
+
+    def deserialize0(serialTabs:Seq[String]):BioNames = {
+      val chunks = serialTabs
+
+      val id = chunks(0)
+      val names = chunks(2).split("\" \"")
+      val otherIds = SeqTools.groupByKey( chunks(3).split("\\) \\(").map(_.split(",")).map(x => x(0) -> x(1))).map(pair => (pair._1 -> pair._2.toSeq))
+      val goTerms = chunks(5).split(" ")
+      val species = chunks(4).split("\" \"")
+      val bioname = BioNames(id, names, otherIds, species, goTerms, Seq(chunks(6)))
+      bioname
+    }
+
+    def serialize(bioDocument:BioNames):Seq[String] = {
+      val id = bioDocument.identifier
+      val allNames = bioDocument.names.mkString("  ")
+      val allIds = bioDocument.otherIds.toSeq.flatMap(pair => pair._2.sorted.map(pair._1+":"+ _)).mkString("  ")
+      val allGoTerms = bioDocument.goTerms.mkString("  ")
+      val allSpecies = bioDocument.species.mkString("  ")
+      val description = bioDocument.description.mkString("  ")
+
+      val serialTabs = Seq(id, allNames, allIds, allGoTerms, allSpecies, description)
+      serialTabs
+    }
+
+    def deserialize(serialTabs:Seq[String]):BioNames = {
+      val chunks = serialTabs
+
+      val id = chunks(0)
+      val names:Seq[String] = if(chunks(2).isEmpty) Seq.empty else chunks(2).split("  ")
+
+      val otherIdChunks:Seq[(String,String)] = if(chunks(3).isEmpty) Seq.empty else chunks(3).split("  ").map(x=>StringTools.splitOnPattern(x,":").getOrElse(throw new Error("can't separate ID schema "+x)))
+      val otherIds = SeqTools.mapValues[String, Iterable[String], Seq[String]]( SeqTools.groupByKey(otherIdChunks ), _.toSeq)
+      val goTerms:Seq[String] = if(chunks(5).isEmpty) Seq.empty else chunks(5).split("  ")
+      val species:Seq[String] = if(chunks(4).isEmpty) Seq.empty else chunks(4).split("  ")
+      val descriptions:Seq[String] = if(chunks(6).isEmpty) Seq.empty else chunks(6).split("  ")
+      val bioname = BioNames(id, names, otherIds, species, goTerms, descriptions)
+      println(bioname)
+      bioname
     }
   }
 
