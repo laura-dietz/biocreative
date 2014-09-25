@@ -3,6 +3,8 @@ package edu.umass.ciir.biocreative.parse
 import java.io.{File, FileInputStream, BufferedInputStream, InputStream}
 import java.util.zip.GZIPInputStream
 
+import edu.umass.ciir.strepsi.MainTools
+
 /**
  * User: dietz
  * Date: 9/25/14
@@ -12,7 +14,9 @@ object IdiotTest {
 
 
   def main(args:Array[String]): Unit = {
-    val biothesaurusFile = new File("/home/dietz/biocreative/data/biothesaurus/iproclass.xml.gz")
+    val biothesaurusFileName = MainTools.strsFromArgsSimple(args, "--biothesaurus=").headOption.getOrElse("/home/dietz/biocreative/data/biothesaurus/iproclass.xml.gz")
+
+    val biothesaurusFile = new File(biothesaurusFileName)
 
     val stream: InputStream = {
       val stream = new BufferedInputStream(new FileInputStream(biothesaurusFile))
