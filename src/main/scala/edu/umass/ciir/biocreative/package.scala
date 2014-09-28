@@ -43,7 +43,7 @@ package object biocreative {
       val goTerms = bioNameBuffer.flatMap(_.goTerms).distinct
       val description = bioNameBuffer.map(_.description).mkString(" ")
 
-      BioNames(id, names, otherIds, species, goTerms, Seq(description))
+      BioNames.apply(id, names, otherIds, species, goTerms, Seq(description))
 
     }
 
@@ -67,7 +67,7 @@ package object biocreative {
       val otherIds = SeqTools.groupByKey( chunks(3).split("\\) \\(").map(_.split(",")).map(x => x(0) -> x(1))).map(pair => (pair._1 -> pair._2.toSeq))
       val goTerms = chunks(5).split(" ")
       val species = chunks(4).split("\" \"")
-      val bioname = BioNames(id, names, otherIds, species, goTerms, Seq(chunks(6)))
+      val bioname = BioNames.apply(id, names, otherIds, species, goTerms, Seq(chunks(6)))
       bioname
     }
 
@@ -95,7 +95,7 @@ package object biocreative {
       val species:Seq[String] = if(chunks(4).isEmpty) Seq.empty else chunks(4).split("  ")
       val descriptions:Seq[String] = if(chunks(6).isEmpty) Seq.empty else chunks(6).split("  ")
       val bioname = BioNames(id, names, otherIds, species, goTerms, descriptions)
-      println(bioname)
+//      println(bioname)
       bioname
     }
   }

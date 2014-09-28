@@ -20,6 +20,7 @@ object LoadBioDocument {
     var bioNameBuffer = new ListBuffer[BioNames]()
     val resultMap = scala.collection.mutable.HashMap[Name, BioNames]()
 
+    var counter:Int = 0
     for(line <- source.getLines()){
       val chunks = line.split('\t')
       val id = chunks(0)
@@ -30,6 +31,9 @@ object LoadBioDocument {
           bioNameBuffer.clear()
         }
         prevId = id
+        counter += 1
+
+        if(counter % 100000 == 0) println(s"Loaded $counter entries for ${file.getAbsolutePath}")
       }
 
       val bioname = BioNames.deserialize(chunks)
