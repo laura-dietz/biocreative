@@ -34,6 +34,7 @@ class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsens
   val pb: ProcessBuilder = new ProcessBuilder(command)
   pb.redirectInput(Redirect.PIPE)
   pb.redirectOutput(Redirect.PIPE)
+  pb.redirectError(Redirect.INHERIT)
   val proc = pb.start()
 
   def tag(doc: String): Seq[Match] = {
@@ -49,12 +50,15 @@ class FastNameTagger(val dictionaryFile:File, wholeWordMatch:Boolean, caseInsens
     var matches: Seq[Match] = Seq()
     while (true) {
       line = reader.readLine()
-      if (line == "") {
+      if (line == null || line == "") {
         return matches
       }
-      val parts = line.split('\t')
-      assert(parts.length == 6, "response from name-tagger does not contain exactly 6 parts "+parts.mkString(", "))
-      matches :+= Match(parts(0).toInt, parts(1).toInt, parts(2), if(parts(3).toBoolean)MatchType.Exact else MatchType.CaseInsensitive, parts(5))
+      //if(line == null || line.length ==0) System.err.println("Got empty response from name-tagger.")
+      //else {
+        val parts = line.split('\t')
+        assert(parts.length == 6, "response from name-tagger does not contain exactly 6 parts " + parts.mkString(", "))
+        matches :+= Match(parts(0).toInt, parts(1).toInt, parts(2), if (parts(3).toBoolean) MatchType.Exact else MatchType.CaseInsensitive, parts(5))
+      //}
     }
     throw new RuntimeException("This shouldn't happen")
   }

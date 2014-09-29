@@ -13,13 +13,13 @@ import scala.reflect.io.Directory
  * Date: 9/22/14
  * Time: 9:52 AM
  */
-class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean) {
+class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:String) {
   System.setProperty("file.encoding","UTF-8")
 
   val counting = new CountingTable[String]()
   val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
 //  val goTermMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/GO_ID.txt.gz.sorted.gz"))
-  val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File("./name-tagger.bio/nameDict.cleaned.txt")).both
+  val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File(tagger.dictionaryFile.getAbsolutePath)).both
 
   val biocreativeAnnotationParser = new BioCreativeAnnotationParser(tagger, doTrain) 
   
@@ -156,10 +156,11 @@ object BioCreativePipeline {
   def main(args:Array[String]): Unit = {
     val dictionaryFile = MainTools.strsPlainFromArgs(args, "--dictionary=").headOption.getOrElse(throw new IllegalArgumentException("required flag --dictionary={dictionaryfile}"))
     val articlesDir = MainTools.strsPlainFromArgs(args, "--articles=").headOption.getOrElse(throw new IllegalArgumentException("required flag --articles={dir}"))
+    val entrezMapFile = MainTools.strsPlainFromArgs(args, "--entezMapFile=").headOption.getOrElse(throw new IllegalArgumentException("required flag --entrezMapFile={file}"))
     val doTrain = MainTools.strsPlainFromArgs(args, "--train").nonEmpty
 
     val tagger = new FastNameTagger(new java.io.File(dictionaryFile), wholeWordMatch = true, caseInsensitiveMatch = true, TextScrubber.scrubSentencePunctuation(_,virtualSpace = false))
-    val pipe = new BioCreativePipeline(tagger, doTrain)
+    val pipe = new BioCreativePipeline(tagger, doTrain, entrezMapFile = entrezMapFile)
     pipe.processAllDocuments(Directory(articlesDir))
   }
 }
