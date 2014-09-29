@@ -1,0 +1,126 @@
+Names from biothesaurus, up to 20 characters
+Tested against BC4-training data passages
+
+
+failure examples:
+
+itpr1, itpr3  entrez (25262, 25679)
+The results demonstrate that cAMP alone had no effect on the intracellular Ca2+ sto
+res (Fig. 2C), but it significantly increased the sensitivity of each IP3R subtype
+to IP3 (Fig. 2, C and D). For all subtypes, a maximally effective concentration of
+cAMP caused the EC50 for IP3-evoked Ca2+ release to decrease by between 2- and 4-fo
+ld (Table 1).
+Found: List( cAMP ,  Ca2+ ,  IP3R ,  cAMP ,  EC50 ,  Ca2+ ,  camp ,  ca2. ,  ip3r ,  camp
+,  ec50 ,  ca2. )
+Found: List(Some(cAMP), Some(Ca2+), Some(IP3R), Some(cAMP), Some(EC50), Some(Ca2+), Some(C
+AMP), Some(Ca2+), Some(IP3R), Some(CAMP), Some(EC50), Some(Ca2+))
+found: missedGeneEntrez (12)) = List( cAMP (8977795),  Ca2+ (8852506),  IP3R (27300834),
+cAMP (8977795),  EC50 (13629912),  Ca2+ (8852506),  camp (8977797),  ca2. (8852506)
+,  ip3r (27300834),  camp (8977797),  ec50 (13629912),  ca2. (8852506))
+
+
+slc18a2  entrez:25549
+The fact that LR are marked by a relatively small storage pool containing low amounts of VMAT, whereas HR are marked by a relatively large storage pool containing high amounts of VMAT may well explain why COC-treated LR are more vulnerable to the dopamine depleting effects of RES than COC-treated HR.
+
+arrb2 entrez:25388
+Depletion of beta-arrestin2 shows a significant  reduction on both ANG and SII medi
+ated phosphorylation of EGFR at Tyr-845  compared with its own agonist stimulation
+in the control siRNA-transfected  condition (**, p < 0.05).
+
+bhmt entrez: 81508
+The combination of these three protein separation methods enabled us to characterise 11 prominent liver cytosolic protein changes, and provided information overlap to facilitate verification of protein changes by more than one physical property and separation technique. Thus a ~45 kDa protein with a pI of ~10 conforms to the characteristics of protein 1 (by 1D PAGE), protein 4 (by 1D IEF), and protein 8 (by 2D-PAGE). From each of these gel separation techniques, the protein was excised and subjected to MALDI-TOF MS. In all cases this resulted in the identification of the protein as betaine homocysteine methyltransferase-1 (BHMT-1)
+
+ccamk entrez: 732824
+To investigate whether H2O2 also plays a role in NO-induced activation of ZmCCaMK i
+n ABA signalling, the activation and gene expression of ZmCCaMK induced by H2O2 wer
+e examined in leaves of maize plants.  Together with these data, the present result
+s suggest that NO is required for H2O2-induced activation of ZmCCaMK in ABA signall
+ing in leaves of maize plants.
+
+
+casp3 entrez: 25402
+Both procaspase 9 and procaspase 3 were highly activated in DBTRG-05MG, DBTRG 8401 and RG2 cells after BP treatment.
+/
+and the results showed that BP treatment increased the cleavage of caspase 3 protein to induce apoptosis of tumor cells in vivo (Fig. 3d).
+
+-- marked under different entrez id
+-- goldGeneEntrez = List(25402)
+foundGeneEntrez (0) = List()
+missedGeneEntrez (8)) = List( caspase (9124009),  caspase 3 (9124082),  3 protein (53021),  protein (38901200),  caspase (9124009),  caspase 3 (9124082),  3 protein (53021),  protein (38901200))
+
+
+
+mrp1  entrez 100037760
+As shown in Fig. 2, while a consistent but moderate increase in ZmMRP1 transcript level was afforded by S-metolachlor during the entire treatment period (from 4 to 96 h), the induction of ZmMRP1 expression by rac-metolachlor was moderate during the first hours but became dramatic from 24 h of treatment onwards.
+
+brd1 entrez
+Consistent with the function of brassinosteroids in promoting cell elongation, brd1
+-m1 maize mutants exhibit severe dwarfism and leaf structure aberrations at the who
+le leaf and cellular levels.
+
+
+
+On 09/29/2014 04:34 PM, Laura Dietz wrote:
+>
+> these names are all from biothesaurus
+>
+> all name entries: 43,794,405
+>
+> On 09/29/2014 04:31 PM, Laura Dietz wrote:
+> >
+> > exp4: (same as exp3)
+> >
+> > {4,20},  40,863,723 entries
+> >  entrezRecall=0.44044044044044045       geneSymbolRecall=0.3833833833833834     goRecall=0.0
+> >
+> >
+> > On 09/29/2014 04:13 PM, Laura Dietz wrote:
+> > >
+> > > exp3:
+> > >
+> > > with medium length names {4,15}, 34235425 name entries
+> > >
+> > > 69/100 passages find the right annotations
+> > >  entrezRecall=0.44044044044044045       geneSymbolRecall=0.3833833833833834     goR
+> > >
+> > >
+> > >
+> > >
+> > > On 09/29/2014 03:37 PM, Laura Dietz wrote:
+> > > >
+> > > > 14/100 documents find right annotations, the rest does not indicate the right entrez id
+> > > >
+> > > > this (and prev) is on shortword names
+> > > >
+> > > >  entrezRecall=0.06906906906906907       geneSymbolRecall=0.056056056056056056   goRecall=0.0
+> > > >
+> > > > On 09/29/2014 03:26 PM, Laura Dietz wrote:
+> > > > >
+> > > > > wholeword matches micro-recall.
+> > > > >  entrezRecall=0.06906906906906907       geneSymbolRecall=0.056056056056056056   goRecall=0.0
+> > > > >
+> > > > >
+> > > > >
+> > > > > On 09/29/2014 02:34 PM, Laura Dietz wrote:
+> > > > > >
+> > > > > > [dietz@compute-1-1 biocreative]$ grep -e "entrezRecall" runpipe.log
+> > > > > >  entrezRecall=1.0       geneSymbolRecall=0.0    goRecall=0.0
+> > > > > >  entrezRecall=1.0       geneSymbolRecall=0.8055555555555556     goRecall=0.0
+> > > > > >  entrezRecall=1.0       geneSymbolRecall=0.6744186046511628     goRecall=0.0
+> > > > > >  entrezRecall=1.0       geneSymbolRecall=0.6888888888888889     goRecall=0.0
+> > > > > >
+> > > > > >
+> > > > > > with all names ; run from Sunday 28
+> > > > > >
+> > > > > >
+> > > > >
+> > > > >
+> > > >
+> > > >
+> > >
+> > >
+> >
+> >
+>
+>
+
