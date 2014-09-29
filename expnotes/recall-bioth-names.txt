@@ -2,6 +2,12 @@ Names from biothesaurus, up to 20 characters
 Tested against BC4-training data passages
 
 
+cd /mnt/nfs/work1/dietz/biocreative/code/biocreative
+[dietz@compute-1-1 biocreative]$ cat runpipe.sh
+java -cp target/biocreative-s2.10.2-g3.7-SNAPSHOT-1.4-SNAPSHOT-jar-with-dependencies.jar -Xmx16G edu.umass.ciir.biocreative.tag.BioCreativePipeline --dictionary=/mnt/nfs/work1/dietz/biocreative/data/name-tagger/biothesaurus-full/nameDict.cleaned.mediumwords.txt --articles=/mnt/nfs/work1/dietz/biocreative/biocreative4-go/BC4GO-training/Annotations --train --entrezMapFile=/mnt/nfs/work1/dietz/biocreative/data/name-tagger/biothesaurus-full/gold-Entrez_Gene_ID.txt
+
+
+
 failure examples:
 
 itpr1, itpr3  entrez (25262, 25679)
