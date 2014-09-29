@@ -67,6 +67,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
 
   
   def processSingleDocumentTrain(doc:BioCreativeAnnotatedDocument)  {
+    val docCounting = new CountingTable[String]
     println("======================================")
     println("========"+doc.documentId+"===========")
     
@@ -116,24 +117,11 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
       counting.add("allGoTerm")
       counting.add("allEntrez")
 
+      if (foundGeneSymbol.nonEmpty) docCounting.add("foundGeneSymbol")
+      if (foundGeneEntrez.nonEmpty) docCounting.add("foundEntrez")
+      docCounting.add("allGeneSymbol")
+      docCounting.add("allEntrez")
 
-      //      for(annotation <- passage.annotations.get) {
-//
-//        println(doc.documentId + " " + passage.passageOffset + " " + annotation.annotationId)
-//
-//
-//
-//
-//        println(s"scrubbed ${TextScrubber.scrubSentencePunctuation(passage.text, virtualSpace = true)}")
-//        println(s"offset: ${passage.passageOffset} \t ${passage.text} \n Matches: " + matches.mkString(", ") + " \n " +
-//          "goldMatches Entrez: " + foundGeneEntrez.map("##" + _.mention + "##").mkString(", ") + " -- " +
-//          missedGeneEntrez.map(_.mention).mkString(", ") + "\n" +
-//          "canonical match names: " + canonicalMatchNames.mkString(", ") + "\n" +
-//          "goldMatches Gene: " + annotation.goldGeneSymbol.map(x => if (foundGeneSymbol.isDefined && foundGeneSymbol.get.mention == x) {
-//          "##" + x + "##"
-//        } else x).mkString(", ") + " " +
-//          "Go:" + annotation.goldGo.mkString(","))
-//      }
     }
 
 
@@ -141,7 +129,10 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
     val entrezRecall = 1.0 * counting.getOrElse("foundEntrez", 0) / counting.getOrElse("allEntrez", 0)
     val geneRecall = 1.0 * counting.getOrElse("foundGeneSymbol", 0) / counting.getOrElse("allGeneSymbol", 0)
     val goRecall = 1.0 * counting.getOrElse("foundGoTerm", 0) / counting.getOrElse("allGoTerm", 0)
+    val docEntrezRecall = 1.0 * docCounting.getOrElse("foundEntrez", 0) / docCounting.getOrElse("allEntrez", 0)
+    val docGeneRecall = 1.0 * docCounting.getOrElse("foundGeneSymbol", 0) / docCounting.getOrElse("allGeneSymbol", 0)
     println(s" entrezRecall=$entrezRecall\tgeneSymbolRecall=$geneRecall\tgoRecall=$goRecall")
+    println(s" DOC entrezRecall=$docEntrezRecall\tgeneSymbolRecall=$docGeneRecall")
 
   }
 
