@@ -50,7 +50,7 @@ object LoadBioDocument {
   def convertToDiskBacker(inputFile:String, outputFile:String) = {
 
       val nameToBioNames = loadMap(new java.io.File(inputFile))
-      val stringstringMap = nameToBioNames.map(x => x._1 -> x._2.toString)
+      val stringstringMap = nameToBioNames.map(x => x._1 -> BioNames.serialize(x._2).mkString("\t"))
       DiskBacking.createStringStringDiskBackingImm(stringstringMap, outputFile)
   }
 
