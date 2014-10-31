@@ -20,7 +20,8 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
   System.setProperty("file.encoding","UTF-8")
 
   val counting = new CountingTable[String]()
-  val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
+  val entrezMap = LoadBioDocument.loadMap(new java.io.File(entrezMapFile))
+//  val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
 //  val goTermMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/GO_ID.txt.gz.sorted.gz"))
   val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File(tagger.dictionaryFile.getAbsolutePath)).both
 
