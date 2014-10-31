@@ -181,7 +181,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
     println(s" DOC entrezRecall=$docEntrezRecall\tgeneSymbolRecall=$docGeneRecall")
 
     println(" EntrezPrecAtCount: "+Seq(1,5,10,20,50,100).map(level => level -> counting.getOrElse("entrezAt"+level,0)).mkString("  "))
-    println(" EntrezPrecAtAvg  : "+Seq(1,5,10,20,50,100).map(level => level -> counting.getOrElse("entrezAt"+level,0)/counting.getOrElse("entrezAtNorm", 1)).mkString("  "))
+    println(" EntrezPrecAtAvg  : "+Seq(1,5,10,20,50,100).map(level => level -> 1.0 * counting.getOrElse("entrezAt"+level,0)/counting.getOrElse("entrezAtNorm", 1)).mkString("  "))
   }
 
   def processSingleDocumentTest(document: BioCreativeAnnotatedDocument) = {
