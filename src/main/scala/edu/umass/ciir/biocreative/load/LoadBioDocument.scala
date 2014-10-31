@@ -55,8 +55,8 @@ object LoadBioDocument {
   }
 
   def main(args:Array[String]): Unit ={
-    val inputFile =MainTools.strsFromArgsSimple(args, "-inputFile=",1,cutPrefix = true).head
-    val outputFile =MainTools.strsFromArgsSimple(args, "-outputFile=",1,cutPrefix = true).head
+    val inputFile =MainTools.strsPlainFromArgs(args, "-inputFile=").headOption.getOrElse(throw new Error("required argument -inputFile="))
+    val outputFile =MainTools.strsPlainFromArgs(args, "-outputFile=").headOption.getOrElse(throw new Error("required argument -outputFile="))
     convertToDiskBacker(inputFile,outputFile)
   }
 }
