@@ -1,11 +1,14 @@
 package edu.umass.ciir.biocreative.tag
 
-import edu.umass.ciir.biocreative.{BioNamesWithNameIds, NameId}
+import edu.umass.ciir.biocreative
 import edu.umass.ciir.biocreative.load.{LoadBioDocument, LoadNameIds}
 import edu.umass.ciir.biocreative.scrub.TextScrubber
 import edu.umass.ciir.biocreative.tag.BioCreativeAnnotationParser.BioCreativeAnnotatedDocument
+import edu.umass.ciir.biocreative.{BioNamesWithNameIds, NameId}
 import edu.umass.ciir.strepsi.{CountingTable, MainTools}
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.reflect.io.Directory
 
 /**
@@ -20,6 +23,15 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
   val entrezMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/Entrez_Gene_ID.txt.gz.sorted.gz"))
 //  val goTermMap = LoadBioDocument.loadMap(new java.io.File("./name-tagger.bio/GO_ID.txt.gz.sorted.gz"))
   val (name2id, id2name) = LoadNameIds.loadMap(new java.io.File(tagger.dictionaryFile.getAbsolutePath)).both
+
+  val anyname2EntrezName = {
+    val map = new collection.mutable.HashMap[biocreative.Name, ListBuffer[biocreative.Name]]()
+    for((entrezId, bionames) <- entrezMap; name <- bionames.names) {
+      val list = map.getOrElseUpdate(name, new ListBuffer[biocreative.Name]())
+      list += entrezId
+    }
+    map.result()
+  }
 
   val biocreativeAnnotationParser = new BioCreativeAnnotationParser(tagger, doTrain) 
   
@@ -88,6 +100,36 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
       }))
 
 
+      val entrezMatches = new mutable.HashMap[biocreative.Name, ListBuffer[Match]]
+      for(m <- matches) {
+        id2name.get(m.nameId) match {
+          case Some(nameId) => anyname2EntrezName.get(nameId) match {
+            case Some(entrezNames) => {
+              println("linked match "+m+" to "+entrezNames.distinct.length+" entrez entries "+entrezNames)
+              for(name <- entrezNames) {
+                entrezMatches.getOrElseUpdate(name, new ListBuffer[Match]()) += m
+              }
+            }
+            case None => {}
+          }
+          case None => {}
+        }
+      }
+      val sortedMatches = entrezMatches.toList.sortBy(- _._2.length)
+      println(s"entrezMatch ranking for this paragraph: "+sortedMatches.take(20).map(pair => pair._1 +"\t\t"+pair._2).mkString("\n","\n","\n"))
+
+      for(goldEntrez <- goldGeneEntrez) {
+        val foundIdx = sortedMatches.map(_._1).indexOf(goldEntrez)
+        if(foundIdx > -1) {
+          if (foundIdx < 5 ) counting.add("entrezAt5")
+          if (foundIdx < 10 ) counting.add("entrezAt10")
+          if (foundIdx < 20 ) counting.add("entrezAt20")
+          if (foundIdx < 50 ) counting.add("entrezAt50")
+          if (foundIdx < 100 ) counting.add("entrezAt100")
+          counting.add("entrezAtSomewhere")
+        }
+      }
+
 
 //      val goldGoTerms = passage.annotations.get.flatMap(_.goldGoTerm).distinct
 //      val goTermAvgScore = matches.map(m => goldGoTerms.map(g => countInEntry(m.nameId, goTermEntry(g))).sum).sum / (matches.length*goldGoTerms.size)
@@ -134,6 +176,7 @@ class BioCreativePipeline(tagger:FastNameTagger, doTrain:Boolean, entrezMapFile:
     println(s" entrezRecall=$entrezRecall\tgeneSymbolRecall=$geneRecall\tgoRecall=$goRecall")
     println(s" DOC entrezRecall=$docEntrezRecall\tgeneSymbolRecall=$docGeneRecall")
 
+    println(" EntrezPrecAt: "+Seq(5,10,20,50,100).map(level => level -> counting.getOrElse("entrezAt"+level,0)).mkString("  "))
   }
 
   def processSingleDocumentTest(document: BioCreativeAnnotatedDocument) = {
