@@ -15,7 +15,7 @@ import scala.collection.mutable.ListBuffer
  * Time: 10:53 PM
  */
 object LoadBioDocument {
-  def loadMap(file:File):Map[Name, BioNames] = {
+  def loadMap(file:File, fromLine:Int=0, toLine:Int=Integer.MAX_VALUE):Map[Name, BioNames] = {
     val source = io.Source.fromInputStream(new GZIPInputStream(new FileInputStream(file)))
     var prevId = ""
     var bioNameBuffer = new ListBuffer[BioNames]()
@@ -28,17 +28,19 @@ object LoadBioDocument {
       if(id != prevId){
         // submit
         if(bioNameBuffer.nonEmpty) {
-          resultMap += prevId -> BioNames.fromSeq(bioNameBuffer)
+          if(counter >= fromLine && counter <= toLine) {
+            resultMap += prevId -> BioNames.fromSeq(bioNameBuffer)
+          }
           bioNameBuffer.clear()
         }
         prevId = id
         counter += 1
 
-        if(counter % 100000 == 0) println(s"Loaded $counter entries for ${file.getAbsolutePath}")
+        if(counter % 100000 == 0) println(s"Loaded $counter entries for ${file.getAbsolutePath}  id = $id")
       }
 
-      val bioname = BioNames.deserialize(chunks)
-      bioNameBuffer += bioname
+        val bioname = BioNames.deserialize(chunks)
+        bioNameBuffer += bioname
 
     }
     source.close()
@@ -47,9 +49,9 @@ object LoadBioDocument {
 
 
 
-  def convertToDiskBacker(inputFile:String, outputFile:String) = {
+  def convertToDiskBacker(inputFile:String, outputFile:String, fromLine:Int=0, toLine:Int=Integer.MAX_VALUE) = {
 
-      val nameToBioNames = loadMap(new java.io.File(inputFile))
+      val nameToBioNames = loadMap(new java.io.File(inputFile), fromLine, toLine)
       val stringstringMap = nameToBioNames.map(x => x._1 -> BioNames.serialize(x._2).mkString("\t"))
       DiskBacking.createStringStringDiskBackingImm(stringstringMap, outputFile)
   }
@@ -57,6 +59,8 @@ object LoadBioDocument {
   def main(args:Array[String]): Unit ={
     val inputFile =MainTools.strsPlainFromArgs(args, "-inputFile=").headOption.getOrElse(throw new Error("required argument -inputFile="))
     val outputFile =MainTools.strsPlainFromArgs(args, "-outputFile=").headOption.getOrElse(throw new Error("required argument -outputFile="))
-    convertToDiskBacker(inputFile,outputFile)
+    val fromLine =MainTools.strsPlainFromArgs(args, "-fromLine=").headOption.map(_.toInt).getOrElse(0)
+    val toLine =MainTools.strsPlainFromArgs(args, "-toLine=").headOption.map(_.toInt).getOrElse(Integer.MAX_VALUE)
+    convertToDiskBacker(inputFile,outputFile,fromLine, toLine)
   }
 }
