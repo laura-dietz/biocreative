@@ -7,6 +7,7 @@ import edu.umass.ciir.biocreative.{BioNames, Name}
 import edu.umass.ciir.strepsi.MainTools
 import edu.umass.ciir.strepsimur.DiskBacking
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -17,37 +18,51 @@ import scala.collection.mutable.ListBuffer
 object LoadBioDocument {
   def loadMap(file:File, fromLine:Int=0, toLine:Int=Integer.MAX_VALUE):Map[Name, BioNames] = {
     val source = io.Source.fromInputStream(new GZIPInputStream(new FileInputStream(file)))
-    var prevId = ""
-    var bioNameBuffer = new ListBuffer[BioNames]()
     val resultMap = scala.collection.mutable.HashMap[Name, BioNames]()
 
-    var counter:Int = 0
-    for(line <- source.getLines()){
-      val chunks = line.split('\t')
-      val id = chunks(0)
-      if(id != prevId){
-        // submit
-        if(bioNameBuffer.nonEmpty) {
-          if(counter >= fromLine && counter <= toLine) {
-            resultMap += prevId -> BioNames.fromSeq(bioNameBuffer)
-          }
-          bioNameBuffer.clear()
-        }
-        prevId = id
-        counter += 1
-
-        if(counter % 100000 == 0) println(s"Loaded $counter entries for ${file.getAbsolutePath}  id = $id")
-      }
-
-        val bioname = BioNames.deserialize(chunks)
-        bioNameBuffer += bioname
-
-    }
+    fillResultMap(source,resultMap, fromLine, toLine, file.getAbsolutePath)
     source.close()
     resultMap.toMap
   }
 
 
+  def fillResultMap(source:io.Source, resultMap:mutable.HashMap[Name, BioNames], fromLine:Int, toLine:Int, fileGetAbsolutePath:String) {
+    var prevId = ""
+    var counter: Int = 0
+    var startRecording = false
+    var bioNameBuffer = new ListBuffer[BioNames]()
+    for (line <- source.getLines()) {
+      val chunks = line.split('\t')
+      val id = chunks(0)
+      if (id != prevId) {
+        if(counter >= fromLine) {
+          startRecording = true
+          // submit
+          if (bioNameBuffer.nonEmpty) {
+            if (counter >= fromLine && counter <= toLine) {
+              resultMap += prevId -> BioNames.fromSeq(bioNameBuffer)
+            }
+            bioNameBuffer.clear()
+            if (counter > toLine) return
+          }
+          prevId = id
+          counter += 1
+
+          if (counter % 100000 == 0) println(s"Loaded $counter entries for $fileGetAbsolutePath  id = $id")
+        } else {
+          prevId = id
+          counter += 1
+          if (counter % 100000 == 0) println(s"skipping $counter entries for $fileGetAbsolutePath  id = $id")
+        }
+      }
+
+      if(startRecording) {
+        val bioname = BioNames.deserialize(chunks)
+        bioNameBuffer += bioname
+      }
+
+    }
+  }
 
   def convertToDiskBacker(inputFile:String, outputFile:String, fromLine:Int=0, toLine:Int=Integer.MAX_VALUE) = {
 
