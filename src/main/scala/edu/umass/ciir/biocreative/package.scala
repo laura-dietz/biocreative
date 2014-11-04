@@ -32,6 +32,49 @@ package object biocreative {
     }
   }
 
+  object BioGalagoNames {
+    def scrub(s:String):String = {
+      s.replaceAllLiterally("(","")
+       .replaceAllLiterally(")","")
+       .replaceAllLiterally("/","")
+       .replaceAllLiterally("<","")
+       .replaceAllLiterally(">","")
+       .replaceAllLiterally("[","")
+       .replaceAllLiterally("]","")
+       .replaceAllLiterally("\"","")
+       .replaceAllLiterally("\'","")
+       .replaceAllLiterally(":","")
+       .replaceAllLiterally(";","")
+       .replaceAllLiterally("?","")
+       .replaceAllLiterally("!","")
+       .replaceAllLiterally("@","")
+       .replaceAllLiterally("\\","")
+       .replaceAllLiterally("{","")
+       .replaceAllLiterally("}","")
+       .replaceAllLiterally("@","")
+       .replaceAllLiterally("#","")
+       .replaceAllLiterally("$","")
+       .replaceAllLiterally("%","")
+       .replaceAllLiterally("^","")
+       .replaceAllLiterally("&","")
+       .replaceAllLiterally("*","")
+       .replaceAllLiterally("=","")
+    }
+
+    def serialize(bioDocument:BioNames):String = {
+      val id = "<src>"+scrub(bioDocument.identifier)+"</src>"
+      val allNames = bioDocument.names.map(x => "<n>"+scrub(x)+"</n>").mkString(" ")
+      val allIds = bioDocument.otherIds.toSeq.flatMap(pair => pair._2.sorted.map(x => "<"+scrub(pair._1)+">"+ scrub(x) + "</"+scrub(pair._1)+">")).mkString(" ")
+      val allGoTerms = bioDocument.goTerms.map(_.replaceAllLiterally(":","_")).map(x => "<go>"+scrub(x)+"</go>").mkString(" ")
+      val allSpecies = bioDocument.species.map(x => "<spec>"+scrub(x)+"</spec>").mkString(" ")
+      val description = bioDocument.description.map(x => "<desc>"+scrub(x)+"</desc>").mkString("\n")
+
+      val serialTabs = Seq(id, allNames, allIds, allGoTerms, allSpecies, description)
+
+      serialTabs.mkString("\n<bio>\n","\n","\n</bio>\n")
+
+    }
+  }
 
   object BioNames {
     def fromSeq(bioNameBuffer:Seq[BioNames]):BioNames = {

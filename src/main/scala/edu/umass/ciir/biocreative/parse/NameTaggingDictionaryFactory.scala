@@ -40,9 +40,9 @@ class NameTaggingDictionaryFactory(outputDirectory:File, biothesaurusFile:File, 
       new GZIPInputStream(stream)
     } else stream
   }
-  private final val bioThesaususIterator: Iterator[Node] = null
-  private final val bioThesaususParser: BioThesaususParser = null
-  private final val parsingTools: BioCreativeParsing = new BioCreativeParsing
+//  private final val bioThesaususIterator: Iterator[Node] = null
+//  private final val bioThesaususParser: BioThesaususParser = null
+//  private final val parsingTools: BioCreativeParsing = new BioCreativeParsing
 
   val parser = new BioThesaususParser(stream)
   val iter = parser.iterator()
