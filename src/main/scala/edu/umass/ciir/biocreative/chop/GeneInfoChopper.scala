@@ -133,6 +133,7 @@
 //object GeneInfoChopper {
 //
 //  def main(args:Array[String]): Unit ={
+//System.setProperty("file.encoding","UTF-8")
 //    val inputFile =MainTools.strsPlainFromArgs(args, "-inputFile=").headOption.getOrElse(throw new Error("required argument -inputFile="))
 //    val outputFile =MainTools.strsPlainFromArgs(args, "-chopOutputDir=").headOption.getOrElse(throw new Error("required argument -chopOutputDir="))
 //    val fromLine =MainTools.strsPlainFromArgs(args, "-fromLine=").headOption.map(_.toInt).getOrElse(0)
