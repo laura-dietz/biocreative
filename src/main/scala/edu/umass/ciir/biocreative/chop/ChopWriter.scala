@@ -21,7 +21,8 @@ class ChopWriter(pathPrefix:String, suffix:String) {
   }
 
   def scrub(s:String):String = {
-    s.replaceAll("[^a-zA-Z0-9\\._\\-+]","").toLowerCase
+    val str = s.replaceAll("[^a-zA-Z0-9\\._\\-+]","").toLowerCase
+    str.substring(0,math.min(str.length, 200))
   }
 
   def flush(): Unit = {
