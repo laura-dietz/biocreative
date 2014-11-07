@@ -27,7 +27,7 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
 
   val iter = new TabLineIterator(io.Source.fromFile(geneInfoFile).getLines(), caseInsensitive = true)
 
-  val geneSymbolWriter = new ChopWriter(chopOutputDir, ".bio")
+  val geneSymbolWriter = new ChopWriter(chopOutputDir, ".bio", "")
   val writers = Seq(geneSymbolWriter)
 
   def write() {

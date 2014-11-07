@@ -14,7 +14,7 @@ import scala.xml.Node
  * Date: 11/4/14
  * Time: 3:11 PM
  */
-class BioThesaurusChopper(biothesaurusFile:String, chopOutputDir:String, fromLine:Int, toLine:Int, flushIntervall:Int) {
+class BioThesaurusChopper(biothesaurusFile:String, chopOutputDir:String, fromLine:Int, toLine:Int, flushIntervall:Int, appendNamesFile:String) {
 
   private final val stream: InputStream = {
     val stream = new BufferedInputStream(new FileInputStream(biothesaurusFile))
@@ -25,7 +25,7 @@ class BioThesaurusChopper(biothesaurusFile:String, chopOutputDir:String, fromLin
 
   val parser = new BioThesaususParser(stream)
   val iter = parser.iterator()
-  val geneSymbolWriter = new ChopWriter(chopOutputDir, ".bio")
+  val geneSymbolWriter = new ChopWriter(chopOutputDir, ".bio", appendNamesFile)
   val writers = Seq(geneSymbolWriter)
 
   def write() {
@@ -97,8 +97,9 @@ object BioThesaurusChopper {
     val fromLine =MainTools.strsPlainFromArgs(args, "-fromLine=").headOption.map(_.toInt).getOrElse(0)
     val toLine =MainTools.strsPlainFromArgs(args, "-toLine=").headOption.map(_.toInt).getOrElse(Integer.MAX_VALUE)
     val flushIntervall =MainTools.strsPlainFromArgs(args, "-flushIntervall=").headOption.map(_.toInt).getOrElse(500)
-
-    val chopper = new BioThesaurusChopper(inputFile, outputFile,fromLine, toLine, flushIntervall)
+    val appendNamesFile =MainTools.strsPlainFromArgs(args, "-appendNamesFile=").headOption.getOrElse("")
+    
+    val chopper = new BioThesaurusChopper(inputFile, outputFile,fromLine, toLine, flushIntervall, appendNamesFile=appendNamesFile)
     chopper.write()
     chopper.close()
   }

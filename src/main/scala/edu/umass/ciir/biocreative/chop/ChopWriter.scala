@@ -2,7 +2,7 @@ package edu.umass.ciir.biocreative.chop
 
 import java.io.{File, FileWriter}
 
-import edu.umass.ciir.strepsi.FileTools
+import edu.umass.ciir.strepsi.{StringTools, FileTools}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -12,12 +12,37 @@ import scala.collection.mutable.ListBuffer
  * Date: 11/4/14
  * Time: 3:32 PM
  */
-class ChopWriter(pathPrefix:String, suffix:String) {
+class ChopWriter(pathPrefix:String, suffix:String, appendNamesFile:String) {
   val bufferMap = new mutable.HashMap[String, ListBuffer[String]]
   FileTools.makeDirs(pathPrefix)
 
+  val onlyTheseNames:Option[Set[String]] = {
+    if(appendNamesFile.length==0) None
+    else {
+      val namesSet = new mutable.HashSet[String]()
+      for(line <- io.Source.fromFile(appendNamesFile).getLines(); if line.length>0){
+        val name = StringTools.substringMinusEnd(line, ".bio".length)
+        namesSet += name
+      }
+      Some(namesSet.result().toSet)
+    }
+  }
+
+
+  def appendThisName(key:String):Boolean = {
+    if(onlyTheseNames.isEmpty) true
+    else {
+      val scrubbedFilename = scrub(key)
+      onlyTheseNames.get.contains(scrubbedFilename)
+    }
+
+  }
+
+
   def append(key:String, text:String): Unit = {
-    bufferMap.getOrElseUpdate(key, new ListBuffer[String]) += text
+    if(appendThisName(key)){
+      bufferMap.getOrElseUpdate(key, new ListBuffer[String]) += text
+    }
   }
 
   def scrub(s:String):String = {
