@@ -97,7 +97,7 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
 
       val appendix = BioGalagoNames.serialize(bioDocument)
       for(name <- bioDocument.names.distinct; if name.length>=3 && Seq(0,1,2).forall(name.charAt(_).isLetter)) {
-//        geneSymbolWriter.append(name, appendix)
+        geneSymbolWriter.append(name, appendix)
       }
 
       true
