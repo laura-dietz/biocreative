@@ -25,7 +25,7 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
   }
 
 
-  val iter = new TabLineIterator(io.Source.fromFile(geneInfoFile), caseInsensitive = true)
+  val iter = new TabLineIterator(io.Source.fromFile(geneInfoFile).getLines(), caseInsensitive = true)
 
   val geneSymbolWriter = new ChopWriter(chopOutputDir, ".bio")
   val writers = Seq(geneSymbolWriter)
@@ -38,7 +38,7 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
         if (count % 1000 == 0) print(".")
         if (count % 100000 == 0) {
           println()
-          writers.foreach(_.flush())
+//          writers.foreach(_.flush())
         }
         if (count == 0) {
           //          println("\nStopped.")
@@ -51,12 +51,14 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
           count -= 1
         }
       } else {
+        writers.foreach(_.flush())
         writers.foreach(_.close())
         return
       }
     }
 
     //    writers.foreach(_.flush())
+    writers.foreach(_.flush())
     writers.foreach(_.close())
   }
 
@@ -95,7 +97,7 @@ class GeneInfoChopper(geneInfoFile:String, chopOutputDir:String, fromLine:Int, t
 
       val appendix = BioGalagoNames.serialize(bioDocument)
       for(name <- bioDocument.names.distinct; if name.length>=3 && Seq(0,1,2).forall(name.charAt(_).isLetter)) {
-        geneSymbolWriter.append(name, appendix)
+//        geneSymbolWriter.append(name, appendix)
       }
 
       true

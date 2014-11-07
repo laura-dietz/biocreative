@@ -1,26 +1,37 @@
 package edu.umass.ciir.biocreative.chop
 
+import scala.collection.mutable.ListBuffer
+
 /**
  * User: dietz
  * Date: 11/4/14
  * Time: 8:01 PM
  */
-class TabLineIterator(source:io.Source, caseInsensitive:Boolean) extends BufferedIterator[Seq[String]] {
-  var lineIter = source.getLines().buffered
+class TabLineIterator(lineIterator: Iterator[String], caseInsensitive:Boolean) extends BufferedIterator[Seq[String]] {
+  val lineIter = lineIterator
+  var lineIterHead:String = if(lineIter.hasNext) lineIter.next() else ""
+
 
 
   def seekToNext():Option[Seq[String]] = {
-    if(!lineIter.hasNext) None
+    if(!lineIter.hasNext || !lineIterHead.contains("\t")) None
     else {
-      val line = lineIter.head
+      val line = lineIterHead
       val prefix = {
         val pref = line.substring(0, line.indexOf("\t"))+"\t"
         if(caseInsensitive) pref.toLowerCase
         else pref
       }
-      val (batch, remaining) = lineIter.span(line => if(caseInsensitive) line.toLowerCase.startsWith(prefix) else line.startsWith(prefix))
-      lineIter = remaining.buffered
-      Some(batch.toSeq)
+      val batch = new ListBuffer[String]()
+      batch += line
+      while(if(caseInsensitive) lineIterHead.toLowerCase.startsWith(prefix) else lineIterHead.startsWith(prefix)) {
+        batch += lineIterHead
+        lineIterHead = if(lineIter.hasNext) lineIter.next() else ""
+      }
+
+//      val (batch, remaining) = lineIter.span(line => if(caseInsensitive) line.toLowerCase.startsWith(prefix) else line.startsWith(prefix))
+//      lineIter = remaining.buffered
+      Some(batch)
     }
   }
 
@@ -41,7 +52,7 @@ class TabLineIterator(source:io.Source, caseInsensitive:Boolean) extends Buffere
 
 object TabLineIterator {
   def main(args:Array[String]): Unit = {
-    val tli = new TabLineIterator(io.Source.fromFile("/home/dietz/biocreative/code/biocreative/data/gene/gene_info.sortedbysymbol.filtered3letters"), caseInsensitive = true)
+    val tli = new TabLineIterator(io.Source.fromFile("/home/dietz/biocreative/code/biocreative/data/gene/gene_info.sortedbysymbol.filtered3letters").getLines(), caseInsensitive = true)
     for(elem <- tli.take(10)) {
       println(elem.mkString("\n"))
       println()
