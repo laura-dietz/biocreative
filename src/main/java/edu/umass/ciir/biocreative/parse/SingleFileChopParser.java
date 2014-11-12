@@ -8,11 +8,13 @@ import org.lemurproject.galago.utility.Parameters;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 
 public class SingleFileChopParser extends DocumentStreamParser {
 
     protected BufferedReader reader;
     protected String identifier;
+    private HashSet<String> uniqueLines = new HashSet<String>();
 
     public SingleFileChopParser(DocumentSplit split, Parameters pp) throws IOException {
         super(split, pp);
@@ -55,9 +57,16 @@ public class SingleFileChopParser extends DocumentStreamParser {
 
         int lines = 0;
         while ((line = reader.readLine()) != null) {
-            buffer.append(line);
-            buffer.append('\n');
-            lines ++;
+            String trimmedLine = line.trim();
+            if(trimmedLine.length() < 3 ||
+                    trimmedLine.startsWith("<bio>") ||
+                    trimmedLine.startsWith("</bio>") ||
+                    !uniqueLines.contains(trimmedLine)) {
+                buffer.append(line);
+                buffer.append('\n');
+                uniqueLines.add(trimmedLine);
+                lines++;
+            }
         }
 
         if(lines == 0) return null;
