@@ -44,6 +44,7 @@ public class SingleFileChopParser extends DocumentStreamParser {
 
     public Document nextDocument() throws IOException {
         String line;
+        uniqueLines.clear();
 
         if (reader == null) {
             return null;
