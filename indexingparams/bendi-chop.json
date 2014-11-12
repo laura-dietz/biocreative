@@ -1,0 +1,54 @@
+{
+  "corpus_" : "/mnt/scratch3/biocreative/code/biocreative/index/biochop/corpus",
+  "corpus" : true,
+  "corpusParameters" :   {
+    "blockSize" : 512,
+    "filename" : "/mnt/scratch3/biocreative/code/biocreative/index/biochop/corpus",
+    "mergerClass" : "org.lemurproject.galago.core.index.merge.CorpusMerger",
+    "readerClass" : "org.lemurproject.galago.core.index.corpus.CorpusReader",
+    "tokenizer" :     {
+      "fields" : [ "n" , "geneid", "genbank_id", "entrez_gene_id", "desc", "go", "spec","bio"],
+      "formats" :       {
+
+      }
+    },
+    "writerClass" : "org.lemurproject.galago.core.index.corpus.CorpusFolderWriter"
+  },
+  "q-distrib" : 50,
+  "fieldIndex" : true,
+  "fieldIndexParameters" :   {
+    "nonStemmedPostings" : true,
+    "stemmedPostings" : false,
+  },
+  "galagoJobDir" : "/mnt/scratch/biochop-index-tmp",
+  "indexPath" : "/mnt/scratch3/biocreative/code/biocreative/index/biochop",
+  "index" : "/mnt/scratch3/biocreative/code/biocreative/index/biochop",
+  "inputPath": ["/mnt/scratch/biochopped/"],
+
+  "mode" : "local",
+  "metadata" : true,
+  "nonStemmedPostings" : true,
+  "parser" :   {
+    "filetype": "bio",
+    "externalParsers" : [       {
+      "class" : "edu.umass.ciir.biocreative.parse.SingleFileChopParser",
+      "filetype" : "bio",
+    }]
+  },
+
+  "port" : 60257,
+  "server" : false,
+  "skipDistance" : 500,
+  "skipping" : true,
+  "stemmedPostings" : true,
+  "stemmer" : [ ],
+  "tokenizer" :   {
+    "fields" : [ "n" , "geneid", "genbank_id", "entrez_gene_id", "desc", "go", "spec","bio"],
+    "formats" :     {
+
+    },
+    "tokenizerClass" : "org.lemurproject.galago.core.parse.TagTokenizer"
+  },
+  "tokenizerClass" : "org.lemurproject.galago.core.parse.TagTokenizer"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "corpus_" : "/home/dietz/biocreative/code/index/biothe-c/corpus",
+  "corpus" : true,
+  "corpusParameters" :   {
+    "blockSize" : 512,
+    "filename" : "/home/dietz/biocreative/code/index/biothe-c/corpus",
+    "mergerClass" : "org.lemurproject.galago.core.index.merge.CorpusMerger",
+    "readerClass" : "org.lemurproject.galago.core.index.corpus.CorpusReader",
+    "tokenizer" :     {
+      "fields" : [ "n" , "geneid", "genbank_id", "entrez_gene_id", "desc", "go", "spec","bio"],
+      "formats" :       {
+
+      }
+    },
+    "writerClass" : "org.lemurproject.galago.core.index.corpus.CorpusFolderWriter"
+  },
+  "q-distrib" : 50,
+  "fieldIndex" : true,
+  "fieldIndexParameters" :   {
+    "nonStemmedPostings" : true,
+    "stemmedPostings" : false,
+  },
+  "galagoJobDir" : "/home/dietz/biocreative/code/index/tmp",
+  "indexPath" : "/home/dietz/biocreative/code/index/biothe-c",
+  "index" : "/home/dietz/biocreative/code/index/biothe-c",
+  "inputPath": ["chopoutput/"],
+
+  "mode" : "local",
+  "metadata" : true,
+  "nonStemmedPostings" : true,
+  "parser" :   {
+    "filetype": "bio",
+    "externalParsers" : [       {
+      "class" : "edu.umass.ciir.biocreative.parse.SingleFileChopParser",
+      "filetype" : "bio",
+    }]
+  },
+
+  "port" : 60257,
+  "server" : false,
+  "skipDistance" : 500,
+  "skipping" : true,
+  "stemmedPostings" : true,
+  "stemmer" : [ ],
+  "tokenizer" :   {
+    "fields" : [ "n" , "geneid", "genbank_id", "entrez_gene_id", "desc", "go", "spec","bio"],
+    "formats" :     {
+
+    },
+    "tokenizerClass" : "org.lemurproject.galago.core.parse.TagTokenizer"
+  },
+  "tokenizerClass" : "org.lemurproject.galago.core.parse.TagTokenizer"
+  }
+}
