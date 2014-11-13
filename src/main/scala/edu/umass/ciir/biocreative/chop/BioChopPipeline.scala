@@ -322,7 +322,6 @@ object BioChopPipeline {
     val galagoChopIndex = MainTools.strsPlainFromArgs(args, "--chopindex=").headOption.getOrElse(throw new IllegalArgumentException("required flag --chopindex={indexdir}"))
     val dictionaryFile = MainTools.strsPlainFromArgs(args, "--dictionary=").headOption.getOrElse(throw new IllegalArgumentException("required flag --dictionary={dictionaryfile}"))
     val articlesDir = MainTools.strsPlainFromArgs(args, "--articles=").headOption.getOrElse(throw new IllegalArgumentException("required flag --articles={dir}"))
-    val entrezMapFile = MainTools.strsPlainFromArgs(args, "--entrezMapFile=").headOption.getOrElse(throw new IllegalArgumentException("required flag --entrezMapFile={file}"))
     val doTrain = MainTools.strsPlainFromArgs(args, "--train").nonEmpty
 
     val tagger = new FastNameTagger(new java.io.File(dictionaryFile), wholeWordMatch = true, caseInsensitiveMatch = true, TextScrubber.scrubSentencePunctuation(_,virtualSpace = false))
