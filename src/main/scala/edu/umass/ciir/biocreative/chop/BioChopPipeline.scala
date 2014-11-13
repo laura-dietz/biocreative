@@ -128,11 +128,12 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
     for ( FetchedScoredDocument(scored, doc) <- docs) yield {
       if(doc.tags != null && !doc.tags.isEmpty) {
         val fulltext = doc.text
-        val geneSymbolTags = doc.tags.find(tag => "n".equals(tag.name))
+        val geneSymbolTags = doc.tags.filter(tag => "n".equals(tag.name))
+//        val geneSymbolTags = doc.tags.find(tag => "n".equals(tag.name))
         val geneSymbol =
           geneSymbolTags.map(tag => fulltext.substring(tag.charBegin, tag.charEnd))
         geneSymbol.map(id => Pair(id, scored.score))
-      }  else None
+      }  else Seq.empty
     }
     SeqTools.distinctBy[(String,Double),String](result.flatten, _._1)
   }
