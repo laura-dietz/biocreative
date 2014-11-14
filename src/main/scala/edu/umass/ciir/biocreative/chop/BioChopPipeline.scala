@@ -151,10 +151,13 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
         val canonicalTokenizedMatches = canonicalMatchNames.map(str => tokenizer.tokenize(str).terms)
         val namesForQuery = canonicalTokenizedMatches.flatten.distinct.filterNot(StopWordList.isStopWord).filter(_.length>2).map(_.toLowerCase)
         val passageTerms = tokenizer.tokenize(passage.text).terms.filterNot(StopWordList.isStopWord).filter(_.length > 2).map(_.toLowerCase)
-        if(namesForQuery.nonEmpty ){
-          val fsdByName = queryAndTokenize(ChopQueryLib.sdmWithFieldNorm(namesForQuery, "n"), 100)
-          val entrezByName = entrezFromFetchScoredDocuments( fsdByName )
-          val genesymbolByName = geneSymbolFromFetchScoredDocuments( fsdByName ) 
+        val (entrezByName, genesymbolByName) =
+          if(namesForQuery.nonEmpty ) {
+            val fsdByName = queryAndTokenize(ChopQueryLib.sdmWithFieldNorm(namesForQuery, "n"), 100)
+            val entrezByName = entrezFromFetchScoredDocuments(fsdByName)
+            val genesymbolByName = geneSymbolFromFetchScoredDocuments(fsdByName)
+            (entrezByName, genesymbolByName)
+          } else (Seq.empty, Seq.empty)
 
           val fsdByDesc = queryAndTokenize(ChopQueryLib.sdmWithFieldNorm(passageTerms, "desc"), 100)
           val entrezByDesc = entrezFromFetchScoredDocuments( fsdByDesc )
@@ -192,19 +195,19 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
 
 
           println("----" + doc.documentId + " offset:" + passage.passageOffset + " -----")
-          println(passage.text)
-          println(matches.map(_.mention))
-          println(canonicalMatchNames)
+          println("passage: "+passage.text)
+          println("surface-n    " +matches.map(_.mention))
+          println("canonical-n  "+canonicalMatchNames)
           println("-- goldGeneSymbol = " + goldGeneSymbol)
           println("-- goldGeneEntrez = " + goldGeneEntrez)
           println(s"foundGeneEntrezIrName (${foundGeneEntrezIrName.size}) = " + foundGeneEntrezIrName)
-          println(s"missedGeneEntrezIrName (${missedGeneEntrezIrName.size})) = " + missedGeneEntrezIrName)
+//          println(s"missedGeneEntrezIrName (${missedGeneEntrezIrName.size})) = " + missedGeneEntrezIrName)
           println(s"foundGeneSymbolIrName (${foundGeneSymbolIrName.size}) = " + foundGeneSymbolIrName)
-          println(s"missedGeneSymbolIrName (${missedGeneSymbolIrName.size})) = " + missedGeneSymbolIrName)
+//          println(s"missedGeneSymbolIrName (${missedGeneSymbolIrName.size})) = " + missedGeneSymbolIrName)
           println(s"foundGeneEntrezIrDesc (${foundGeneEntrezIrDesc.size}) = " + foundGeneEntrezIrDesc)
-          println(s"missedGeneEntrezIrDesc (${missedGeneEntrezIrDesc.size})) = " + missedGeneEntrezIrDesc)
+//          println(s"missedGeneEntrezIrDesc (${missedGeneEntrezIrDesc.size})) = " + missedGeneEntrezIrDesc)
           println(s"foundGeneSymbolIrDesc (${foundGeneSymbolIrDesc.size}) = " + foundGeneSymbolIrDesc)
-          println(s"missedGeneSymbolIrDesc (${missedGeneSymbolIrDesc.size})) = " + missedGeneSymbolIrDesc)
+//          println(s"missedGeneSymbolIrDesc (${missedGeneSymbolIrDesc.size})) = " + missedGeneSymbolIrDesc)
 
 
           if (foundGeneEntrezIrName.nonEmpty) counting.add("foundEntrezIrName")
@@ -224,42 +227,51 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
 
 
           val entrezByNameSortedMatches = entrezByName.toList.sortBy(-_._2)
-          println(s"entrezMatch ByName ranking for this paragraph: " + entrezByNameSortedMatches.take(20).map(pair => "match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2).mkString("\n", "\n", "\n"))
+          println(s"entrezMatch ByName ranking for this paragraph (gold: "+goldGeneEntrez.mkString(" ")+"):"+
+            entrezByNameSortedMatches.take(20)
+            .map(pair => "entrez match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2)
+            .mkString("\n", "\n", "\n"))
           for (goldEntrez <- goldGeneEntrez) {
             val foundIdx = entrezByNameSortedMatches.map(_._1).indexOf(goldEntrez)
             if (foundIdx > -1) {
-              if (foundIdx < 1) counting.add("entrezAt1")
-              if (foundIdx < 5) counting.add("entrezAt5")
-              if (foundIdx < 10) counting.add("entrezAt10")
-              if (foundIdx < 20) counting.add("entrezAt20")
-              if (foundIdx < 50) counting.add("entrezAt50")
-              if (foundIdx < 100) counting.add("entrezAt100")
-              counting.add("entrezAtSomewhere")
+              if (foundIdx < 1) counting.add("entrezAt1-n")
+              if (foundIdx < 5) counting.add("entrezAt5-n")
+              if (foundIdx < 10) counting.add("entrezAt10-n")
+              if (foundIdx < 20) counting.add("entrezAt20-n")
+              if (foundIdx < 50) counting.add("entrezAt50-n")
+              if (foundIdx < 100) counting.add("entrezAt100-n")
+              counting.add("entrezAtSomewhere-n")
             }
-            counting.add("entrezAtNorm")
+            counting.add("entrezAtNorm-n")
 
           }
 
 
           val genesymbolByNameSortedMatches = genesymbolByName.toList.sortBy(-_._2)
-          println(s"genesymbolMatch ByName ranking for this paragraph: " + genesymbolByNameSortedMatches.take(20).map(pair => "match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2).mkString("\n", "\n", "\n"))
+          println(s"genesymbolMatch ByName ranking for this paragraph (gold: "+goldGeneSymbolLower.mkString(" ")+"):"+
+            genesymbolByNameSortedMatches.take(20)
+            .map(pair => "name match? " + goldGeneSymbolLower.contains(pair._1.toLowerCase) + "\t\t" + pair._1 + "\t\t" + pair._2)
+            .mkString("\n", "\n", "\n"))
           for (goldSymbol <- goldGeneSymbolLower) {
             val foundIdx = genesymbolByNameSortedMatches.map(_._1.toLowerCase).indexOf(goldGeneSymbolLower)
             if (foundIdx > -1) {
-              if (foundIdx < 1) counting.add("symbolAt1")
-              if (foundIdx < 5) counting.add("symbolAt5")
-              if (foundIdx < 10) counting.add("symbolAt10")
-              if (foundIdx < 20) counting.add("symbolAt20")
-              if (foundIdx < 50) counting.add("symbolAt50")
-              if (foundIdx < 100) counting.add("symbolAt100")
-              counting.add("symbolAtSomewhere")
+              if (foundIdx < 1) counting.add("symbolAt1-n")
+              if (foundIdx < 5) counting.add("symbolAt5-n")
+              if (foundIdx < 10) counting.add("symbolAt10-n")
+              if (foundIdx < 20) counting.add("symbolAt20-n")
+              if (foundIdx < 50) counting.add("symbolAt50-n")
+              if (foundIdx < 100) counting.add("symbolAt100-n")
+              counting.add("symbolAtSomewhere-n")
             }
-            counting.add("symbolAtNorm")
+            counting.add("symbolAtNorm-n")
 
           }
           
           val entrezByDescSortedMatches = entrezByDesc.toList.sortBy(-_._2)
-          println(s"entrezMatch ByDesc ranking for this paragraph: " + entrezByDescSortedMatches.take(20).map(pair => "match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2).mkString("\n", "\n", "\n"))
+          println(s"entrezMatch ByDesc ranking for this paragraph (gold: "+goldGeneEntrez.mkString(" ")+"):"+
+            entrezByDescSortedMatches.take(20)
+            .map(pair => "entrez match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2)
+            .mkString("\n", "\n", "\n"))
           for (goldEntrez <- goldGeneEntrez) {
             val foundIdx = entrezByDescSortedMatches.map(_._1).indexOf(goldEntrez)
             if (foundIdx > -1) {
@@ -277,7 +289,10 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
 
 
           val genesymbolByDescSortedMatches = genesymbolByDesc.toList.sortBy(-_._2)
-          println(s"genesymbolMatch ByDesc ranking for this paragraph: " + genesymbolByDescSortedMatches.take(20).map(pair => "match? " + goldGeneEntrez.contains(pair._1) + "\t\t" + pair._1 + "\t\t" + pair._2).mkString("\n", "\n", "\n"))
+          println(s"genesymbolMatch ByDesc ranking for this paragraph (gold: "+goldGeneSymbolLower.mkString(" ")+"):" +
+            genesymbolByDescSortedMatches.take(20)
+            .map(pair => "name match? " + goldGeneSymbolLower.contains(pair._1.toLowerCase) + "\t\t" + pair._1 + "\t\t" + pair._2)
+            .mkString("\n", "\n", "\n"))
           for (goldSymbol <- goldGeneSymbolLower) {
             val foundIdx = genesymbolByDescSortedMatches.map(_._1.toLowerCase).indexOf(goldGeneSymbolLower)
             if (foundIdx > -1) {
@@ -292,7 +307,7 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
             counting.add("symbolAtNorm")
 
           }
-        }
+
       }
     }
 
@@ -306,8 +321,11 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
     println(s" entrezRecall=$entrezRecall\tgeneSymbolRecall=$geneRecall\tgoRecall=$goRecall")
     println(s" DOC entrezRecall=$docEntrezRecall\tgeneSymbolRecall=$docGeneRecall")
 
-    println(" EntrezPrecAtCount: "+Seq(1,5,10,20,50,100).map(level => level -> counting.getOrElse("entrezAt"+level,0)).mkString("  "))
-    println(" EntrezPrecAtAvg  : "+Seq(1,5,10,20,50,100).map(level => level -> 1.0 * counting.getOrElse("entrezAt"+level,0)/counting.getOrElse("entrezAtNorm", 1)).mkString("  "))
+    println(" SymbolPrecAtCount-Desc: "+Seq(1,5,10,20,50,100).map(level => level -> counting.getOrElse("symbolAt"+level,0)).mkString("  "))
+    println(" SymbolPrecAtAvg-Desc  : "+Seq(1,5,10,20,50,100).map(level => level -> 1.0 * counting.getOrElse("symbolAt"+level,0)/counting.getOrElse("symbolAtNorm", 1)).mkString("  "))
+
+    println(" SymbolPrecAtCount-Name: "+Seq(1,5,10,20,50,100).map(level => level -> counting.getOrElse("symbolAt"+level+"-n",0)).mkString("  "))
+    println(" SymbolPrecAtAvg-Name  : "+Seq(1,5,10,20,50,100).map(level => level -> 1.0 * counting.getOrElse("symbolAt"+level+"-n",0)/counting.getOrElse("symbolAtNorm-n", 1)).mkString("  "))
   }
 
 
