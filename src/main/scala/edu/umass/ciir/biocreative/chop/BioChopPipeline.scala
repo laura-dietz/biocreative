@@ -137,6 +137,12 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
     }
     SeqTools.distinctBy[(String,Double),String](result.flatten, _._1)
   }
+
+  def entrezExistsInIndex(entrezId:String):Boolean = {
+    val query = ChopQueryLib.queryEntrez(entrezId)
+    val sd = galago.retrieveScoredDocuments(query, resultCount = 1)
+    sd.nonEmpty
+  }
   
   def processSingleDocumentTrain(doc:BioCreativeAnnotatedDocument)  {
     val docCounting = new CountingTable[String]
@@ -167,6 +173,11 @@ class BioChopPipeline(tagger:FastNameTagger, doTrain:Boolean, galagoChopIndex:St
 
 
           val goldGeneEntrez = passage.annotations.get.flatMap(_.goldGeneEntrez).distinct
+
+          for(goldEntrez <- goldGeneEntrez) {
+            println("exist goldentrez "+goldEntrez+" in index? "+entrezExistsInIndex(goldEntrez))
+          }
+
           val goldGeneSymbol = passage.annotations.get.flatMap(_.goldGeneSymbol).distinct
           val goldGeneSymbolLower = goldGeneSymbol.map(_.toLowerCase)
 

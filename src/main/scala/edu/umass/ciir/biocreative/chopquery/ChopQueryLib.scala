@@ -13,6 +13,10 @@ object ChopQueryLib {
     s"#combine:w=1.0( #dirichlet:lengths=go( #lengths:go:part=lengths() #counts:@/$goNumber/:part=field.go() ) )"
   }
 
+  def queryEntrez(entrezId:String): String = {
+    s"#combine( #counts:@/$entrezId/:part=field.entrez_gene_id()  )"
+  }
+
   def querySingleTermInFieldWrapped(queryTerm:String, field:String): String = {
     s"#combine:w=1.0( ${querySingleTermInField(queryTerm, field)} )"
   }
